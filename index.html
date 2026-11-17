@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>看懂台股</title>
+<meta name="description" content="輸入股票代號，把股價、估值、財報、股利和警示用白話整理在同一頁。盤後資料，僅供學習參考。">
+<style>
+:root{
+  --bg:#f3f5f8; --card:#ffffff; --text:#1c2733; --muted:#5f6b7a; --line:#e2e7ee;
+  --gold:#1f4e8c; --blue:#1f4e8c; --pink:#1f4e8c; --radius:10px; --head:#14243b;
+  --up:#d23c3c; --down:#16875a; --warn-bg:#fff6e5; --warn-line:#e0a43a;
+  --ma5:#3b7dd8; --ma20:#b8730f; --ma60:#8a5cc2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{min-height:100dvh;background:var(--bg);color:var(--text);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;font-size:16px;line-height:1.6;font-feature-settings:"tnum"}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--blue)}
+.wrap{max-width:720px;margin:0 auto;padding:0 12px}
+header.top{position:sticky;top:0;z-index:20;background:var(--head);color:#fff}
+header.top .wrap{display:flex;align-items:center;gap:8px;min-height:52px}
+.brand{font-weight:700;font-size:17px;letter-spacing:.04em;text-decoration:none;color:#fff;margin-right:auto}
+.nav a{font-size:14px;color:#c4cfdd;text-decoration:none;padding:8px 6px}
+.mode{border:1px solid #4a6182;background:transparent;color:#fff;border-radius:6px;padding:6px 12px;font-size:13px;min-height:36px}
+main{padding:14px 0 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.card h2{font-size:16px;font-weight:700;margin-bottom:2px;padding-left:9px;border-left:3px solid var(--blue);line-height:1.3}
+.card .ask{font-size:13px;color:var(--muted)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.src{font-size:11.5px;color:var(--muted);text-align:right;flex:none;max-width:46%}
+.banner{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:14px}
+
+/* 搜尋 */
+.search{position:relative}
+.search input{width:100%;font:inherit;padding:13px 14px;border:1px solid #b9c4d2;border-radius:8px;background:#fff;color:var(--text)}
+.search input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(31,78,140,.15)}
+.sugg{position:absolute;left:0;right:0;top:100%;z-index:15;background:#fff;border:1px solid var(--line);border-radius:8px;margin-top:4px;overflow:hidden;box-shadow:0 6px 18px rgba(20,36,59,.12)}
+.sugg button{display:flex;width:100%;gap:8px;align-items:baseline;text-align:left;border:0;background:none;padding:12px 14px;border-bottom:1px solid var(--line);min-height:48px}
+.sugg button:last-child{border-bottom:0}
+.sugg small{color:var(--muted);margin-left:auto;flex:none}
+.sugg .none{padding:12px 14px;color:var(--muted);font-size:14px}
+.hint{font-size:13px;color:var(--muted);margin-top:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{border:1px solid #c9d2de;background:#fff;border-radius:6px;padding:8px 14px;font-size:14px;min-height:40px;text-decoration:none;color:var(--text)}
+
+/* 數字與漲跌 */
+.up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--text)}
+.big{font-size:34px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.title-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.title-row h1{font-size:22px}
+.tag{font-size:12px;border:0;border-radius:4px;padding:2px 7px;color:var(--muted);background:#eef1f5}
+.star{margin-left:auto;border:1px solid var(--blue);color:var(--blue);background:#fff;border-radius:6px;padding:6px 12px;font-size:13px;min-height:36px}
+.sector{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.sector h3{font-size:13px;color:var(--muted);font-weight:500}
+.sector li{display:flex;justify-content:space-between;list-style:none;font-size:14px;padding:3px 0;font-variant-numeric:tabular-nums}
+
+/* 三層顯示 */
+.row{padding:12px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.row-label{font-size:14.5px}
+.row-value{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.row-value small{font-size:12.5px;font-weight:400;color:var(--muted);margin-left:3px}
+.row-value.na{font-size:14px;font-weight:500;color:var(--muted)}
+.plain{font-size:14.5px;margin-top:4px}
+body.compact .plain, body.compact .summary-list, body.compact .ask{display:none}
+.term{border:0;background:none;padding:0;border-bottom:1px dashed #7d93b2;line-height:1.3}
+details.more{margin-top:6px;font-size:13.5px}
+details.more summary{color:var(--muted);cursor:pointer;padding:4px 0;list-style:none}
+details.more summary::before{content:"＋ "}
+details.more[open] summary::before{content:"－ "}
+details.more summary::-webkit-details-marker{display:none}
+details.more dl{background:#f7f9fb;border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-top:4px}
+details.more dt{font-weight:700;font-size:12.5px;color:var(--muted);margin-top:6px}
+details.more dt:first-child{margin-top:0}
+.state{background:#f7f9fb;border:1px dashed #cbd3de;border-radius:6px;padding:10px 12px;font-size:14px;color:var(--muted)}
+
+/* 位置條：只用中性色，不代表好壞 */
+.pos{margin-top:8px}
+.pos-title{font-size:12px;color:var(--muted)}
+.pos-track{position:relative;height:6px;border-radius:3px;background:#e2e7ee;margin:9px 0 4px}
+.pos-med{position:absolute;top:-4px;width:2px;height:14px;background:#8a97a8;transform:translateX(-1px)}
+.pos-cur{position:absolute;top:-5px;width:16px;height:16px;border-radius:50%;background:var(--head);border:2px solid #fff;box-shadow:0 0 0 1px var(--head);transform:translateX(-8px)}
+.pos-ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* 警示與總結 */
+.alert{background:var(--warn-bg);border:1px solid var(--warn-line);border-left:4px solid var(--warn-line);border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:14.5px}
+.alert strong{display:block}
+.alert small{color:var(--muted);display:block;margin-top:2px;word-break:break-all}
+.ok-line{font-size:14.5px}
+.summary-list{padding-left:20px;font-size:15px}
+.summary-list li{margin:3px 0}
+
+/* 圖表 */
+.ranges{display:flex;gap:6px;margin:8px 0}
+.ranges button{flex:1;border:1px solid #c9d2de;background:#fff;border-radius:6px;padding:8px 0;font-size:14px;min-height:40px}
+.ranges button.on{background:var(--head);border-color:var(--head);color:#fff;font-weight:700}
+#kline{height:300px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-height:38px}
+.legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:4px}
+.bars{width:100%;height:auto;display:block;margin-top:6px}
+.bars text{font-size:10px;fill:var(--muted)}
+.bars .val{fill:var(--text);font-weight:700}
+.bars rect.bar{fill:var(--blue)}
+.bars rect.hit{fill:transparent}
+.tip{position:fixed;z-index:60;background:var(--head);color:#fff;font-size:12.5px;padding:5px 9px;border-radius:8px;pointer-events:none;transform:translate(-50%,-120%);white-space:nowrap}
+table.data{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;margin-top:6px}
+table.data th,table.data td{padding:5px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.data th:first-child,table.data td:first-child{text-align:left}
+.scroll{overflow-x:auto}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14.5px}
+.kv dt{color:var(--muted)}
+.check li{list-style:none;margin:6px 0}
+.check button{width:100%;text-align:left;border:1px solid #c9d2de;background:#fff;border-radius:6px;padding:12px 14px;min-height:48px}
+
+/* 名詞小卡 */
+.sheet-bg{position:fixed;inset:0;background:rgba(20,36,59,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);border-radius:12px 12px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:720px;max-height:80dvh;overflow:auto}
+.sheet h3{font-size:19px;margin-bottom:6px}
+.sheet h4{font-size:12.5px;color:var(--muted);margin-top:10px}
+.sheet .close{float:right;border:0;background:none;font-size:15px;color:var(--muted);padding:6px 10px;min-height:40px}
+.btn{display:block;width:100%;margin-top:14px;padding:12px;border:0;background:var(--blue);color:#fff;border-radius:8px;font-size:16px;min-height:48px}
+.dots{text-align:center;color:var(--muted);font-size:13px;margin-top:8px}
+.gl-cat{font-size:14px;color:var(--muted);margin:14px 0 6px}
+.gl-list{display:flex;flex-wrap:wrap;gap:8px}
+footer{font-size:12px;color:var(--muted);padding:8px 0 28px;text-align:center}
+footer p{margin:4px 0}
+.loading{text-align:center;color:var(--muted);padding:40px 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#/">看懂台股</a>
+  <nav class="nav"><a href="#/glossary">名詞表</a><a href="#/about">關於</a></nav>
+  <button class="mode" id="modeBtn" type="button"></button>
+</div></header>
+
+<main class="wrap" id="app"><p class="loading">載入中</p></main>
+
+<footer class="wrap">
+  <p>本網站資料來自證交所、櫃買中心與 FinMind 的公開資料，為盤後資料，可能有延遲或錯誤。內容僅供學習參考，不構成任何投資建議，投資前請以官方公告為準並自行判斷風險。</p>
+  <p>作者：may22</p>
+</footer>
+
+<div class="tip" id="tip" hidden></div>
+<div id="overlay"></div>
+
+<script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+/* ============ 設定 ============ */
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbxFJnZeocVet7lv2QXI2MjF20qTH_7CmYzlgpT5VSCe6FTNj2Jjbt7SiQWl6VSIs5Ci/exec'; // Apps Script 網頁應用程式網址；留空會用示範資料
+const DEMO = !ENDPOINT;
+const KEY = { mode: 'twstock-mode-v1', watch: 'twstock-watch-v1', tour: 'twstock-tour-v1', list: 'twstock-list-v1' };
+
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+
+/* ============ 使用紀錄 ============ */
+function sessionId(){
+  try {
+    let s = sessionStorage.getItem('sid');
+    if(!s){ s = Math.random().toString(36).slice(2); sessionStorage.setItem('sid', s); }
+    return s;
+  } catch { return 'nosession'; }
+}
+function track(event, value = ''){
+  if(!ENDPOINT) return;
+  const body = JSON.stringify({ event, value: String(value), session: sessionId(),
+    device: innerWidth < 700 ? 'mobile' : 'desktop',
+    source: new URLSearchParams(location.search).get('utm_source') || '' });
+  try {
+    navigator.sendBeacon ? navigator.sendBeacon(ENDPOINT, body) : fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', body });
+  } catch {}
+}
+
+/* ============ 格式 ============ */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const has = v => v !== null && v !== undefined && !Number.isNaN(v);
+function f(n, d = 2){ return has(n) ? Number(n).toLocaleString('zh-TW', { maximumFractionDigits: d }) : '沒有資料'; }
+function big(n){
+  if(!has(n)) return '沒有資料';
+  const a = Math.abs(n), s = n < 0 ? '負 ' : '';
+  if(a >= 1e12) return s + f(a / 1e12, 2) + ' 兆元';
+  if(a >= 1e8) return s + f(a / 1e8, a >= 1e10 ? 0 : 1) + ' 億元';
+  if(a >= 1e4) return s + f(a / 1e4, 0) + ' 萬元';
+  return s + f(a, 0) + ' 元';
+}
+const cls = n => !has(n) || n === 0 ? 'flat' : n > 0 ? 'up' : 'down';
+const signed = (n, d = 2) => !has(n) ? '沒有資料' : (n > 0 ? '+' : '') + f(n, d);
+const md = d => d ? Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10)) : '';
+const ymd = d => d ? d.slice(0, 4) + '/' + md(d) : '';
+const upDown = n => n > 0 ? '漲' : n < 0 ? '跌' : '平盤';
+
+/* ============ 名詞表 ============ */
+const G = {
+  lot: { t:'張', cat:'看盤基礎', def:'台股的交易單位。一張等於 1,000 股。', eg:'股價 50 元的股票，買一張要 5 萬元，另外加手續費。', myth:'錢不夠買一張也能買。不到一張叫零股，一次可以只買 1 股。' },
+  odd: { t:'零股', cat:'看盤基礎', def:'不到一張（1,000 股）的交易，最少可以買 1 股。', eg:'股價 600 元的股票買 10 股，大約 6,000 元。', myth:'零股的成交量通常比較小，有時候掛了單要等一下才會成交。' },
+  ohlc: { t:'開高低收', cat:'看盤基礎', def:'一天裡面的四個價格：開盤價、最高價、最低價、收盤價。', eg:'開 100、高 104、低 99、收 103，代表今天從 100 開始，最高碰到 104，最後停在 103。', myth:'收盤價最常被拿來比較，但只看收盤價會漏掉盤中的震盪。' },
+  chg: { t:'漲跌幅', cat:'看盤基礎', def:'今天收盤價和昨天收盤價相比，變動了百分之幾。', eg:'昨天收 100 元，今天收 103 元，漲跌幅是 +3%。', myth:'台灣是紅色代表上漲、綠色代表下跌，和美國網站剛好相反。', calc:'（今天收盤 − 昨天收盤）÷ 昨天收盤' },
+  limit: { t:'漲停與跌停', cat:'交易規則', def:'一般股票一天最多只能漲 10% 或跌 10%，碰到上限叫漲停，碰到下限叫跌停。', eg:'昨天收 100 元，今天最高只能到 110 元，最低只能到 90 元。', myth:'漲停不代表買得到，跌停也不代表賣得掉，因為可能沒有人願意和你成交。興櫃股票和剛上市前五天的股票沒有這個限制。', calc:'昨天收盤 × 1.1 或 × 0.9，再依股價級距取到最接近的報價單位。本頁的數字是依這個規則估算的。' },
+  vol: { t:'成交量', cat:'看盤基礎', def:'今天總共有多少張股票換手。', eg:'成交量 2 萬張，代表今天有 2,000 萬股從賣方轉到買方手上。', myth:'成交量大只代表交易熱絡，買的人和賣的人永遠一樣多，量大不等於大家都在買。', how:'和這檔股票自己平常的量比才有意義。大型股一天幾萬張很正常，小型股幾百張就算多。' },
+  value: { t:'成交金額', cat:'看盤基礎', def:'今天成交的股票總共值多少錢。', eg:'成交 1 萬張、均價 100 元，成交金額大約是 10 億元。', myth:'比成交量更適合拿來比較不同股票的熱度，因為每檔的股價不一樣。' },
+  taiex: { t:'大盤', cat:'看盤基礎', def:'通常指加權指數，把所有上市股票依市值加權算出來的一個數字，代表整體市場的漲跌。', eg:'大盤跌 2% 的日子，大部分股票都會跟著跌。', myth:'個股跌的時候先看大盤。大家一起跌，和只有這一檔跌，意思差很多。' },
+  market: { t:'上市、上櫃、興櫃', cat:'交易規則', def:'股票掛牌的三個市場。上市在證交所，門檻最高；上櫃在櫃買中心，公司通常比較小；興櫃是還在準備上市櫃的公司。', eg:'台灣大型公司多半是上市股票，許多中小型科技和生技公司是上櫃股票。', myth:'興櫃股票沒有漲跌幅限制，成交量通常很小，價格波動可以非常大。本站第一版只收上市和上櫃。' },
+  etf: { t:'ETF', cat:'看盤基礎', def:'一次買進一籃子股票的基金，像股票一樣可以在盤中買賣。', eg:'追蹤市值最大 50 家公司的 ETF，買一張等於同時持有這 50 家公司的一小部分。', myth:'ETF 也會跌，而且每年會收管理費。名稱裡有「高股息」不代表總報酬比較高。' },
+  eod: { t:'盤後資料', cat:'看盤基礎', def:'收盤之後才公布的資料。本站所有數字都是盤後資料。', eg:'下午查到的價格是今天的收盤價；早上開盤前查到的，是前一個交易日的收盤價。', myth:'這裡的價格和你下單當下的價格會不一樣。要看即時報價請用券商的 App。' },
+  mcap: { t:'市值', cat:'看盤基礎', def:'把公司所有股票用現在的股價買下來要花多少錢。', eg:'發行 10 億股、股價 50 元，市值就是 500 億元。', myth:'股價高不代表公司大。股價 1,000 元但只發行 1,000 萬股的公司，市值只有 100 億元。', calc:'發行股數 × 收盤價' },
+  capital: { t:'實收資本額', cat:'看盤基礎', def:'股東實際投入公司的本錢，在台灣通常等於發行股數乘以面額 10 元。', eg:'資本額 100 億元的公司，大約發行了 10 億股。', myth:'資本額是帳上的數字，和公司現在值多少錢（市值）是兩回事。' },
+  kline: { t:'K 線', cat:'技術分析', def:'用一根柱子畫出一天的開高低收。柱子的粗體部分是開盤到收盤，上下的細線是最高和最低。', eg:'紅色柱子代表收盤比開盤高，綠色柱子代表收盤比開盤低。', myth:'K 線只記錄已經發生的價格，沒辦法保證接下來怎麼走。' },
+  ma: { t:'均線', cat:'技術分析', def:'過去幾天收盤價的平均。5 日大約一週、20 日大約一個月、60 日大約一季。', eg:'20 日均線是 100 元，代表過去一個月買的人平均成本大約在 100 元附近。', myth:'股價在均線上面，只是代表最近買的人大多是賺的，不是買進訊號。', calc:'最近 N 個交易日的收盤價加起來 ÷ N' },
+  range52: { t:'一年高低點', cat:'技術分析', def:'過去一年裡出現過的最高價和最低價。', eg:'一年最高 150、最低 90、現在 135，現在的位置在這個範圍的七成五。', myth:'接近一年最高不代表太貴，接近最低也不代表便宜，還是要看公司賺不賺錢。' },
+  gap: { t:'除息缺口', cat:'股利', def:'除息那天，股價會先扣掉要發的股利才開始交易，所以圖上看起來像突然掉了一段。', eg:'昨天收 100 元、每股發 5 元，今天的參考價會從 95 元開始。', myth:'這不是公司出事。你少掉的 5 元股價，會變成 5 元現金發給你。圖上標「息」的地方就是除息日。' },
+  pe: { t:'本益比', cat:'估值', def:'股價是每股獲利的幾倍。', eg:'本益比 20 倍，可以想成照現在的獲利速度，要 20 年才賺回你付的錢。', myth:'本益比低不等於便宜。可能是市場預期它之後會賺比較少。', calc:'股價 ÷ 最近四季每股盈餘合計', how:'只和同產業、和它自己的過去比才有意義。半導體和金融股的正常範圍差很多。', care:'公司獲利正在快速成長或衰退時，用過去的獲利算出來的本益比會失真。虧損的公司算不出本益比。' },
+  pb: { t:'股價淨值比', cat:'估值', def:'股價是每股淨值的幾倍。淨值是公司資產扣掉負債後，屬於股東的部分。', eg:'每股淨值 50 元、股價 100 元，股價淨值比是 2 倍。', myth:'低於 1 倍不一定是撿到便宜，有可能是市場不相信帳上的資產值那麼多。', calc:'股價 ÷ 每股淨值', how:'金融、鋼鐵、航運這類資產很重的產業比較常用這個指標。', care:'軟體或品牌公司的價值多半不在帳上，股價淨值比高是常態。' },
+  dy: { t:'殖利率', cat:'估值', def:'用現在的股價買進，一年領到的現金股利佔買進價格的百分之幾。', eg:'股價 100 元、一年配 5 元，殖利率是 5%。', myth:'殖利率高有時候是因為股價跌很多。而且今年配多少，不保證明年也配這麼多。', calc:'每股現金股利 ÷ 股價', how:'搭配「連續配息幾年」和「公司有沒有賺錢」一起看。', care:'領了股利但股價跌更多，整體還是賠錢，這叫賺了股息賠了價差。' },
+  median: { t:'中位數', cat:'估值', def:'把一群數字從小排到大，排在正中間的那一個。', eg:'五家公司本益比是 8、10、12、15、90，中位數是 12，平均卻是 27。', myth:'本站用中位數而不用平均，因為少數極端值會把平均拉歪。' },
+  rev: { t:'月營收', cat:'財報', def:'公司這個月賣東西收到多少錢，還沒扣掉任何成本。台灣上市櫃公司每月 10 日前要公布上個月的數字。', eg:'月營收 100 億元，代表這個月做了 100 億元的生意。', myth:'營收成長不等於獲利成長。成本如果漲更多，賣越多反而賺越少。', how:'很多產業有淡旺季，所以和去年同一個月比，會比和上個月比更準。' },
+  yoy: { t:'年增率', cat:'財報', def:'和去年同一個時期相比，成長或衰退了百分之幾。', eg:'去年 10 月營收 100 億、今年 10 月 120 億，年增率是 +20%。', myth:'去年同期如果特別差，今年的年增率會看起來特別高，這叫基期低。', calc:'（今年數字 − 去年同期數字）÷ 去年同期數字' },
+  eps: { t:'每股盈餘', cat:'財報', def:'公司賺的錢平均分給每一股，每股分到多少。常寫成 EPS。', eg:'公司一年賺 100 億、發行 10 億股，每股盈餘是 10 元。', myth:'不同公司的每股盈餘不能直接比大小，因為每家的股數和股價都不一樣。', calc:'稅後淨利 ÷ 發行股數', care:'本頁「最近四季合計」是把四個單季數字相加，和公司年報的全年數字可能有一點小差異。' },
+  gm: { t:'毛利率', cat:'財報', def:'每賣 100 元的東西，扣掉直接的製造或進貨成本後剩幾元。', eg:'毛利率 40%，代表賣 100 元的產品，材料和製造成本是 60 元。', myth:'毛利率的高低和產業有關。代工廠 5% 可能算正常，軟體公司 70% 也很常見。', calc:'（營業收入 − 營業成本）÷ 營業收入', how:'看趨勢比看單一數字有用。連續下滑通常代表降價競爭或成本上升。' },
+  om: { t:'營業利益率', cat:'財報', def:'毛利再扣掉薪水、研發、行銷這些費用後，每 100 元營收剩幾元。反映本業的賺錢能力。', eg:'毛利率 40%、營業利益率 25%，代表每 100 元營收裡有 15 元花在營運費用。', myth:'這個數字不包含賣土地、匯兌這類業外收入，所以最能看出本業的狀況。', calc:'營業利益 ÷ 營業收入' },
+  nm: { t:'稅後淨利率', cat:'財報', def:'所有成本、費用、業外損益和稅都算完後，每 100 元營收最後留下幾元。', eg:'淨利率 20%，代表每 100 元營收，最後有 20 元是股東的。', myth:'淨利率突然跳高，要看是不是一次性的業外收入，例如賣掉一棟大樓。', calc:'稅後淨利 ÷ 營業收入' },
+  roe: { t:'股東權益報酬率', cat:'財報', def:'公司用股東的錢，一年賺回百分之幾。常寫成 ROE。', eg:'股東權益 100 億、一年賺 15 億，報酬率是 15%。', myth:'借很多錢也能把這個數字做高，所以要搭配負債比一起看。', calc:'最近四季稅後淨利合計 ÷ 最新一季股東權益' },
+  debt: { t:'負債比', cat:'財報', def:'公司的總資產裡，有百分之幾是借來的。', eg:'總資產 100 億、負債 40 億，負債比是 40%。', myth:'銀行和保險公司的負債主要是客戶的存款和保單，所以負債比九成以上是正常的，不能和一般公司比。', calc:'總負債 ÷ 總資產' },
+  ocf: { t:'營業現金流', cat:'財報', def:'公司靠本業實際收進來的現金。', eg:'帳上賺 10 億，但客戶都還沒付款，營業現金流可能只有 2 億。', myth:'帳上有賺錢不等於有收到現金。長期獲利是正的但營業現金流是負的，值得多看一眼。', care:'現金流量表是累計數字，本頁換算成最近四季的合計。' },
+  fcf: { t:'自由現金流', cat:'財報', def:'營業現金流扣掉買設備、蓋廠房的錢之後，公司可以自由運用的現金。', eg:'營業現金流 50 億、蓋廠花 30 億，自由現金流是 20 億。', myth:'正在大舉擴廠的公司，自由現金流是負的很常見，不一定是壞事。', calc:'營業現金流 − 購置不動產、廠房及設備的支出' },
+  cashdiv: { t:'現金股利', cat:'股利', def:'公司把賺的錢直接發現金給股東，以每股幾元計算。', eg:'每股配 5 元，持有一張（1,000 股）可以領 5,000 元。', myth:'股利會先從股價扣掉，領股利的當下總資產並沒有變多。' },
+  stockdiv: { t:'股票股利', cat:'股利', def:'公司不發現金，改發股票給股東，以每股幾元計算，面額 10 元。', eg:'每股配 1 元股票股利，持有一張會多拿到 100 股。', myth:'股數變多，但每一股的價值會被稀釋，公司整體的價值並沒有因此增加。' },
+  exdiv: { t:'除權息', cat:'股利', def:'領股利的資格截止日。除息日之前買進的人才領得到這次的股利。', eg:'除息日是 7 月 15 日，那 7 月 14 日收盤前要持有才領得到。', myth:'除息日當天買已經領不到這次的股利了。' },
+  fill: { t:'填息', cat:'股利', def:'除息後股價漲回除息前一天的收盤價。', eg:'除息前收 100 元、配 5 元，除息後從 95 元開始，之後收盤回到 100 元就算填息。', myth:'沒有填息的話，領到的股利只是從左邊口袋換到右邊口袋。', calc:'本頁的算法：除息日起，第一次收盤價回到除息前一天收盤價，中間經過幾個交易日。' },
+  payout: { t:'配發率', cat:'股利', def:'公司把賺到的錢，拿出百分之幾發現金給股東。', eg:'去年每股賺 10 元、今年每股發 6 元，配發率是 60%。', myth:'超過 100% 代表發的比賺的多，是在吃老本，通常沒辦法一直維持。', calc:'當年發放的現金股利 ÷ 前一年度每股盈餘（本頁用四季相加估算）' },
+  attention: { t:'注意股', cat:'交易規則', def:'最近漲跌幅或成交量出現異常，被交易所點名提醒的股票。', eg:'一檔股票 6 天漲了 30% 以上，就可能被列為注意股。', myth:'被列為注意股，買賣方式不會改變，只是提醒你它最近波動很大。連續多次被注意就可能變成處置股。' },
+  disposal: { t:'處置股', cat:'交易規則', def:'多次被列為注意股後，交易所用更嚴格的規則限制交易一段時間。', eg:'原本隨時都能成交，處置期間改成每 5 分鐘或 20 分鐘才撮合一次。', myth:'處置期間買賣很不方便，部分情況還要先把錢或股票準備好才能下單，想賣的時候不一定賣得掉。' },
+  altered: { t:'變更交易', cat:'交易規則', def:'公司財務出狀況，例如淨值太低或財報出問題，被交易所改成更嚴格的交易方式，通常就是全額交割。', eg:'一般股票是成交後兩天才扣款，全額交割股要先把錢交給券商才能買。', myth:'這是財務方面的警訊，和注意股、處置股因為漲跌太大而被限制的情況不一樣。' },
+  halt: { t:'暫停交易', cat:'交易規則', def:'股票暫時不能買賣，常見原因是公司有重大訊息要公布，或沒有按時交出財報。', eg:'公司宣布要被併購之前，可能會先暫停交易一天。', myth:'暫停期間想賣也賣不掉，手上的錢會卡住。' }
+};
+const CATS = ['看盤基礎', '估值', '財報', '股利', '技術分析', '交易規則'];
+const term = (k, label) => `<button type="button" class="term" data-term="${k}">${label || G[k].t}</button>`;
+
+/* ============ 畫面元件 ============ */
+function row(o){
+  const g = o.k ? G[o.k] : null;
+  const more = g && (g.calc || g.how || g.care)
+    ? `<details class="more" data-metric="${esc(g.t)}"><summary>怎麼算、怎麼看、要小心什麼</summary><dl>
+        ${g.calc ? `<dt>怎麼算</dt><dd>${g.calc}</dd>` : ''}
+        ${g.how ? `<dt>怎麼看</dt><dd>${g.how}</dd>` : ''}
+        ${g.care ? `<dt>要小心</dt><dd>${g.care}</dd>` : ''}
+        <dt>常見誤解</dt><dd>${g.myth}</dd></dl></details>` : '';
+  const value = o.na
+    ? `<span class="row-value na">${o.na}</span>`
+    : `<span class="row-value ${o.cls || ''}">${o.value}${o.unit ? `<small>${o.unit}</small>` : ''}</span>`;
+  return `<div class="row"><div class="row-head"><span class="row-label">${o.k ? term(o.k, o.label) : o.label}</span>${value}</div>
+    ${o.bar || ''}${o.plain ? `<p class="plain">${o.plain}</p>` : ''}${o.extra || ''}${more}</div>`;
+}
+function card(id, title, ask, src, body){
+  return `<section class="card" id="${id}"><div class="card-head"><div><h2>${title}</h2>${ask ? `<p class="ask">${ask}</p>` : ''}</div>${src ? `<p class="src">${src}</p>` : ''}</div>${body}</section>`;
+}
+const srcTag = (date, who) => (date ? `資料日期 ${ymd(date)}<br>` : '') + `來源：${who}`;
+const stateBox = text => `<p class="state">${text}</p>`;
+
+function posBar(title, s, cur, unit){
+  if(!s || !has(cur) || !(s.hi > s.lo)) return '';
+  const p = x => Math.max(0, Math.min(100, (x - s.lo) / (s.hi - s.lo) * 100));
+  const out = cur < s.lo ? '，現在比這個範圍還低' : cur > s.hi ? '，現在比這個範圍還高' : '';
+  return `<div class="pos"><div class="pos-title">${title}${out}</div>
+    <div class="pos-track"><i class="pos-med" style="left:${p(s.med)}%"></i><b class="pos-cur" style="left:${p(cur)}%"></b></div>
+    <div class="pos-ends"><span>${f(s.lo)}${unit}</span><span>中位數 ${f(s.med)}${unit}</span><span>${f(s.hi)}${unit}</span></div></div>`;
+}
+
+function barChart(items, fmt, label){
+  const data = items.filter(i => has(i.v));
+  if(data.length < 2) return '';
+  const W = 340, H = 150, top = 18, bot = 20;
+  const max = Math.max(0, ...data.map(i => i.v)), min = Math.min(0, ...data.map(i => i.v));
+  const span = (max - min) || 1, y = v => top + (max - v) / span * (H - top - bot);
+  const step = W / data.length, bw = Math.max(3, Math.min(26, step - 2));
+  const iMax = data.reduce((a, c, i) => c.v > data[a].v ? i : a, 0), last = data.length - 1;
+  const mid = Math.floor(last / 2);
+  let out = `<svg class="bars" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">`;
+  out += `<line x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>`;
+  data.forEach((it, i) => {
+    const x = i * step + (step - bw) / 2, y0 = y(Math.max(0, it.v)), h = Math.max(1, Math.abs(y(it.v) - y(0)));
+    out += `<rect class="bar" x="${x.toFixed(1)}" y="${y0.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>`;
+    if(i === last || (i === iMax && Math.abs(i - last) > 2)){
+      const tx = Math.min(W - 2, Math.max(2, x + bw / 2)), anchor = i === last ? 'end' : 'middle';
+      out += `<text class="val" x="${i === last ? W - 1 : tx}" y="${(it.v >= 0 ? y0 - 5 : y0 + h + 11).toFixed(1)}" text-anchor="${anchor}">${fmt(it.v)}</text>`;
+    }
+    if(i === 0 || i === last || i === mid){
+      out += `<text x="${i === 0 ? 0 : i === last ? W : x + bw / 2}" y="${H - 5}" text-anchor="${i === 0 ? 'start' : i === last ? 'end' : 'middle'}">${esc(it.l)}</text>`;
+    }
+    out += `<rect class="hit" x="${(i * step).toFixed(1)}" y="0" width="${step.toFixed(1)}" height="${H}" data-tip="${esc(it.l)}：${esc(fmt(it.v))}"/>`;
+  });
+  return out + '</svg>';
+}
+
+/* ============ 資料層 ============ */
+const mem = {};
+async function api(action, params = {}){
+  const key = action + JSON.stringify(params);
+  if(mem[key]) return mem[key];
+  let out;
+  if(DEMO) out = demoApi(action, params);
+  else {
+    const res = await fetch(ENDPOINT + '?' + new URLSearchParams({ action, ...params }));
+    out = await res.json();
+  }
+  if(out && out.ok) mem[key] = out;
+  return out;
+}
+async function getList(){
+  const today = new Date().toISOString().slice(0, 10);
+  const c = store.get(KEY.list, null);
+  if(!DEMO && c && c.day === today && c.list && c.list.length) return c.list;
+  const r = await api('list');
+  if(r && r.ok){ if(!DEMO) store.set(KEY.list, { day: today, list: r.list }); return r.list; }
+  return [];
+}
+
+/* ---- 後端連不上 FinMind 時，改由使用者的瀏覽器直接抓 ----
+   FinMind 會擋 Google 共用的連線位址，所以歷史股價、財報、股利由這裡補。 */
+const FM_URL = 'https://api.finmindtrade.com/api/v4/data';
+const FM_SETS = { price:['TaiwanStockPrice', 5], per:['TaiwanStockPER', 5], rev:['TaiwanStockMonthRevenue', 4],
+  fin:['TaiwanStockFinancialStatements', 4], bs:['TaiwanStockBalanceSheet', 2], cf:['TaiwanStockCashFlowsStatement', 3], div:['TaiwanStockDividend', 12] };
+function yearsAgo(n){ const d = new Date(); d.setFullYear(d.getFullYear() - n); return d.toISOString().slice(0, 10); }
+const r2 = (x, p = 100) => Math.round(x * p) / p;
+function fmStats(vals){
+  const a = vals.filter(v => v > 0).sort((x, y) => x - y);
+  if(a.length < 3) return null;
+  const m = a.length >> 1;
+  return { lo: r2(a[0]), med: r2(a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2), hi: r2(a.at(-1)), n: a.length };
+}
+function fmByType(rows, wanted){
+  const by = {};
+  rows.forEach(r => { for(const k in wanted) if(wanted[k].includes(r.type)){ by[r.date] = by[r.date] || {}; if(by[r.date][k] === undefined) by[r.date][k] = Number(r.value); } });
+  return by;
+}
+async function fillFromBrowser(d){
+  d.src = d.src || {};
+  const need = Object.keys(FM_SETS).filter(k => !d.src[k] || !d.src[k].ok);
+  if(!need.length) return;
+  const got = {};
+  await Promise.all(need.map(async k => {
+    try {
+      const r = await fetch(`${FM_URL}?dataset=${FM_SETS[k][0]}&data_id=${encodeURIComponent(d.id)}&start_date=${yearsAgo(FM_SETS[k][1])}`);
+      if(r.status === 402) throw new Error('這個小時的免費查詢次數用完了，晚一點再試');
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      got[k] = (await r.json()).data || [];
+      d.src[k] = { ok: true, msg: '' };
+    } catch(e){
+      d.src[k] = { ok: false, msg: /fetch/i.test(e.message) ? '瀏覽器連不上 FinMind' : e.message };
+      track('fetch_error', k + ' ' + d.id);
+    }
+  }));
+  if(got.price) d.hist = got.price.filter(r => Number(r.close) > 0).map(r => [r.date, +r.open, +r.max, +r.min, +r.close, +r.Trading_Volume]);
+  if(got.per){
+    d.val.own = { pe: fmStats(got.per.map(r => +r.PER)), pb: fmStats(got.per.map(r => +r.PBR)), dy: fmStats(got.per.map(r => +r.dividend_yield)) };
+    const l = got.per.at(-1);
+    if(l){
+      if(!has(d.val.pe) && +l.PER > 0) d.val.pe = +l.PER;
+      if(!has(d.val.pb) && +l.PBR > 0) d.val.pb = +l.PBR;
+      if(!has(d.val.dy) && +l.dividend_yield > 0) d.val.dy = +l.dividend_yield;
+      if(!d.val.date) d.val.date = l.date;
+    }
+  }
+  if(got.rev){
+    const m = {};
+    got.rev.forEach(r => { m[r.revenue_year + '-' + String(r.revenue_month).padStart(2, '0')] = +r.revenue; });
+    d.rev = Object.keys(m).sort().map(ym => { const prev = m[(+ym.slice(0, 4) - 1) + ym.slice(4)]; return [ym, m[ym], prev ? r2((m[ym] / prev - 1) * 100, 10) : null]; }).slice(-24);
+  }
+  if(got.fin){
+    const by = fmByType(got.fin, { rev:['Revenue'], gp:['GrossProfit'], oi:['OperatingIncome'], ni:['IncomeAfterTaxes'], eps:['EPS'] });
+    d.fin = Object.keys(by).sort().slice(-8).map(dt => { const x = by[dt], v = k => x[k] === undefined ? null : x[k];
+      return { q: dt.slice(0, 4) + 'Q' + Math.ceil(+dt.slice(5, 7) / 3), date: dt, rev: v('rev'), gp: v('gp'), oi: v('oi'), ni: v('ni'), eps: v('eps') }; });
+  }
+  if(got.bs){
+    const by = fmByType(got.bs, { assets:['TotalAssets'], liab:['Liabilities', 'TotalLiabilities'], equity:['Equity', 'TotalEquity', 'EquityAttributableToOwnersOfParent'] });
+    const ds = Object.keys(by).sort(), l = ds.at(-1);
+    d.bs = l ? { date: l, assets: by[l].assets ?? null, liab: by[l].liab ?? null, equity: by[l].equity ?? null } : null;
+  }
+  if(got.cf){
+    const by = fmByType(got.cf, { ocf:['CashFlowsFromOperatingActivities', 'NetCashInflowFromOperatingActivities'], capex:['PropertyAndPlantAndEquipment'] });
+    const ds = Object.keys(by).sort(), l = ds.at(-1);
+    d.cf = null;
+    if(l){
+      const ye = (+l.slice(0, 4) - 1) + '-12-31', same = (+l.slice(0, 4) - 1) + l.slice(4);
+      const ttm = k => { const c = by[l][k]; if(c === undefined) return null; if(l.slice(5) === '12-31') return c;
+        if(!by[ye] || !by[same] || by[ye][k] === undefined || by[same][k] === undefined) return null; return c + by[ye][k] - by[same][k]; };
+      d.cf = { date: l, ocf: ttm('ocf'), capex: ttm('capex') };
+      if(d.cf.capex !== null) d.cf.capex = Math.abs(d.cf.capex);
+    }
+  }
+  if(got.div){
+    const by = {};
+    got.div.forEach(r => {
+      const cash = (+r.CashEarningsDistribution || 0) + (+r.CashStatutorySurplus || 0), stock = (+r.StockEarningsDistribution || 0) + (+r.StockStatutorySurplus || 0);
+      const y = (r.CashExDividendTradingDate || r.StockExDividendTradingDate || r.date || '').slice(0, 4);
+      if(!y || (!cash && !stock)) return;
+      by[y] = by[y] || { y, cash: 0, stock: 0, ex: [] };
+      by[y].cash = r2(by[y].cash + cash, 1e4); by[y].stock = r2(by[y].stock + stock, 1e4);
+      if(r.CashExDividendTradingDate && cash) by[y].ex.push([r.CashExDividendTradingDate, r2(cash, 1e4)]);
+    });
+    d.div = Object.keys(by).sort().map(y => by[y]).slice(-11);
+  }
+}
+
+/* ---- 示範資料：公司與數字都是虛構的，只用來看畫面 ---- */
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const DEMOS = {
+  DEMO1: { name:'示範半導體', market:'上市', industry:'半導體業', seed:11, days:1250, p0:310, drift:.0006, vol:.017, shares:2.6e9, eps:[3.1,3.4,3.9,4.2,4.0,4.6,5.1,5.4], gm:[51,52,53,54,53,52,51,50], om:.74, nm:.62, cash:[5,5.5,6,7,8,9,10,11,12,13.5,15], debtR:.34 },
+  DEMO2: { name:'示範金控', market:'上市', industry:'金融保險', seed:23, days:1250, p0:24, drift:.0003, vol:.009, shares:1.3e10, eps:[.42,.51,.38,.29,.47,.55,.49,.36], gm:null, om:null, nm:.31, cash:[.6,.7,.75,.8,.85,.9,1,1.05,1,1.1,1.2], debtR:.93 },
+  DEMO3: { name:'示範生技', market:'上櫃', industry:'生技醫療', seed:37, days:150, p0:42, drift:.004, vol:.038, shares:1.2e8, eps:[-.8,-.6,-.9,-.7,-.5,-.6,-.4,-.3], gm:[22,25,24,28,30,29,33,35], om:-1.2, nm:-1.4, cash:[], debtR:.48,
+    warn:[{ type:'處置股', text:'處置期間 示範期間。每 5 分鐘撮合一次。', date:'' }] }
+};
+function tradingDays(n){
+  const out = [], d = new Date();
+  while(out.length < n){
+    if(d.getDay() % 6 !== 0) out.unshift(d.toISOString().slice(0, 10));
+    d.setDate(d.getDate() - 1);
+  }
+  return out;
+}
+function demoStock(id){
+  const c = DEMOS[id];
+  if(!c) return { ok:false, error:'notfound' };
+  const r = rng(c.seed), days = tradingDays(c.days);
+  let p = c.p0;
+  const hist = days.map(d => {
+    const o = p * (1 + (r() - .5) * c.vol);
+    p = Math.max(1, p * (1 + c.drift + (r() - .5) * 2 * c.vol));
+    const hi = Math.max(o, p) * (1 + r() * c.vol * .6), lo = Math.min(o, p) * (1 - r() * c.vol * .6);
+    const rd = x => Math.round(x * 100) / 100;
+    return [d, rd(o), rd(hi), rd(lo), rd(p), Math.round((4e6 + r() * 3e7) * (c.shares / 2.6e9 + .2))];
+  });
+  const last = hist.at(-1), prev = hist.at(-2), close = last[4];
+  const ttm = c.eps.slice(-4).reduce((a, b) => a + b, 0);
+  const lastYear = +days.at(-1).slice(0, 4), lastM = +days.at(-1).slice(5, 7);
+  const qEnd = ['03-31','06-30','09-30','12-31'];
+  let qy = lastYear, qi = Math.floor((lastM - 1) / 3) - 1;
+  if(qi < 0){ qi = 3; qy--; }
+  const fin = [];
+  for(let i = 7; i >= 0; i--){
+    let y = qy, q = qi - i;
+    while(q < 0){ q += 4; y--; }
+    const eps = c.eps[7 - i], ni = eps * c.shares, rev = ni / c.nm * (c.nm < 0 ? -1 : 1) * (c.nm < 0 ? .7 : 1);
+    fin.push({ q: y + 'Q' + (q + 1), date: y + '-' + qEnd[q], rev: Math.abs(rev), gp: c.gm ? Math.abs(rev) * c.gm[7 - i] / 100 : null,
+      oi: c.om === null ? null : (c.nm < 0 ? ni * .9 : ni * c.om / c.nm), ni, eps });
+  }
+  const rev = [];
+  for(let i = 23; i >= 0; i--){
+    const d = new Date(lastYear, lastM - 2 - i, 1);
+    const base = Math.abs(fin.at(-1).rev) / 3 * (1 - i * .012) * (1 + (r() - .5) * .16);
+    rev.push([d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'), Math.round(base), i > 11 ? null : Math.round((8 + (r() - .4) * 30) * 10) / 10]);
+  }
+  const div = c.cash.map((cash, i) => {
+    const y = lastYear - (c.cash.length - 1 - i);
+    const ex = hist.find(h => h[0] >= y + '-07-10' && h[0].slice(0, 4) == y);
+    return { y: String(y), cash, stock: 0, ex: ex ? [[ex[0], cash]] : [[y + '-07-15', cash]] };
+  }).filter(d => d.ex[0][0] <= days.at(-1));
+  const equity = c.shares * close / (c.nm < 0 ? 3.2 : (id === 'DEMO2' ? 1.1 : 5.2));
+  const assets = equity / (1 - c.debtR);
+  const pe = ttm > 0 ? Math.round(close / ttm * 100) / 100 : null;
+  const dy = c.cash.length ? Math.round(c.cash.at(-1) / close * 10000) / 100 : null;
+  const pb = Math.round(close / (equity / c.shares) * 100) / 100;
+  const sp = (v, a, b) => v ? { lo: Math.round(v * a * 100) / 100, med: Math.round(v * (a + b) / 2.1 * 100) / 100, hi: Math.round(v * b * 100) / 100, n: 1200 } : null;
+  const ocf = fin.slice(-4).reduce((a, b) => a + b.ni, 0) * (c.nm < 0 ? 1.1 : 1.3);
+  return {
+    ok:true, id, name:c.name, market:c.market, industry:c.industry, isEtf:false,
+    co:{ full:c.name + '股份有限公司（虛構）', chairman:'示範人物', listed: c.days < 300 ? days[0] : '2004-03-15', founded:'1998-06-01', capital:c.shares * 10, shares:c.shares, web:'' },
+    mcap:{ value:c.shares * close, rank: id === 'DEMO1' ? 12 : id === 'DEMO2' ? 41 : 1183, total:1820 },
+    day:{ date:last[0], close, chg: Math.round((close - prev[4]) * 100) / 100, open:last[1], high:last[2], low:last[3], vol:last[5], value:last[5] * close },
+    hist,
+    val:{ date:last[0], pe, pb, dy,
+      own:{ pe: sp(pe, .62, 1.25), pb: sp(pb, .6, 1.3), dy: sp(dy, .7, 1.6) },
+      ind:{ pe:{ lo:9, med: id === 'DEMO2' ? 12.5 : 19.4, hi:48, n:86 }, pb:{ lo:.8, med: id === 'DEMO2' ? 1.1 : 2.6, hi:8.5, n:92 }, dy:{ lo:.6, med:3.1, hi:6.8, n:74 } } },
+    rev, fin,
+    bs:{ date: fin.at(-1).date, assets, liab: assets * c.debtR, equity },
+    cf:{ date: fin.at(-1).date, ocf, capex: Math.abs(ocf) * (id === 'DEMO1' ? .7 : .1) },
+    div, warn: c.warn || [], warnOk:true, warnMsg:'',
+    idx:{ name:'加權指數', close:27412.33, pct:.42, date:last[0] },
+    src:{ price:{ ok:true }, per:{ ok:true }, rev:{ ok:true }, fin:{ ok:true }, bs:{ ok:true }, cf:{ ok:true }, div:{ ok:true } },
+    fetched:'示範'
+  };
+}
+function demoApi(action, p){
+  if(action === 'list') return { ok:true, list:Object.entries(DEMOS).map(([id, c]) => [id, c.name, c.market, c.industry]) };
+  if(action === 'home') return { ok:true, idx:{ name:'加權指數', close:27412.33, chg:114.6, pct:.42, date:tradingDays(1)[0] },
+    sectors:[['半導體',1.8],['電腦及週邊設備',1.1],['電子零組件',.7],['食品',.1],['金融保險',-.2],['航運',-.9],['生技醫療',-1.3],['鋼鐵',-1.6]], src:{} };
+  if(action === 'stock') return demoStock(p.id);
+}
+
+/* ============ 首頁 ============ */
+let LIST = [];
+async function renderHome(){
+  const app = document.getElementById('app');
+  app.innerHTML = `${DEMO ? `<p class="banner">現在看到的是<strong>示範資料</strong>，公司和數字都是虛構的。把 Apps Script 網址填進 index.html 的 ENDPOINT 之後，才會顯示真實的台股資料。</p>` : ''}
+    <section class="card"><div class="search">
+      <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="輸入股票代號或名稱${DEMO ? '，例如 示範' : '，例如 2330 或 台積'}" aria-label="搜尋股票">
+      <div class="sugg" id="sugg" hidden></div></div>
+      <p class="hint">${term('eod', '所有數字都是盤後資料')}，不是即時報價。${term('market', '上市和上櫃差在哪？')}</p>
+      ${DEMO ? `<div class="chips">${Object.entries(DEMOS).map(([id, c]) => `<a class="chip" href="#/s/${id}">${c.name}</a>`).join('')}</div>` : ''}
+    </section>
+    <div id="homeMarket"><p class="loading">載入今天的市場概況</p></div>
+    <section class="card" id="watchCard" hidden><div class="card-head"><div><h2>我的自選</h2></div></div><div class="chips" id="watch"></div></section>`;
+  bindSearch();
+  LIST = await getList();
+  renderWatch();
+  const h = await api('home');
+  const box = document.getElementById('homeMarket');
+  if(!box) return;
+  if(!h || !h.ok){ box.innerHTML = card('', '今天的市場', '', '', stateBox(errText(h))); return; }
+  const ix = h.idx, s = h.sectors || [];
+  const li = a => a.map(x => `<li><span>${esc(x[0])}</span><span class="${cls(x[1])}">${signed(x[1])}%</span></li>`).join('');
+  box.innerHTML = card('', '今天的市場', '先看整體，再看個股', ix ? srcTag(ix.date, '證交所') : '',
+    (ix ? `<div class="row-head"><span class="row-label">${term('taiex', '加權指數')}</span><span class="big ${cls(ix.pct)}">${f(ix.close)}</span></div>
+      <p class="plain">大盤今天${upDown(ix.pct)} ${ix.pct ? f(Math.abs(ix.pct)) + '%' : ''}${ix.chg ? `，${ix.chg > 0 ? '多' : '少'}了 ${f(Math.abs(ix.chg))} 點` : ''}。${Math.abs(ix.pct) >= 2 ? '這個幅度算大，大部分股票會被帶著走。' : '這個幅度算平常。'}</p>` : stateBox('今天的大盤指數還沒抓到。'))
+    + (s.length ? `<div class="sector"><div><h3>漲最多的產業</h3><ul>${li(s.slice(0, 4))}</ul></div><div><h3>跌最多的產業</h3><ul>${li(s.slice(-4).reverse())}</ul></div></div>` : ''));
+}
+function renderWatch(){
+  const w = store.get(KEY.watch, []), cardEl = document.getElementById('watchCard');
+  if(!cardEl) return;
+  cardEl.hidden = !w.length;
+  document.getElementById('watch').innerHTML = w.map(id => {
+    const hit = LIST.find(x => x[0] === id);
+    return `<a class="chip" href="#/s/${esc(id)}">${esc(DEMOS[id] ? '' : id + ' ')}${esc(hit ? hit[1] : '')}</a>`;
+  }).join('');
+}
+function bindSearch(){
+  const q = document.getElementById('q'), box = document.getElementById('sugg');
+  let hits = [];
+  q.addEventListener('input', () => {
+    const k = q.value.trim().toUpperCase();
+    if(!k){ box.hidden = true; return; }
+    hits = LIST.filter(x => x[0].startsWith(k)).concat(LIST.filter(x => !x[0].startsWith(k) && x[1].toUpperCase().includes(k))).slice(0, 8);
+    box.hidden = false;
+    box.innerHTML = hits.length
+      ? hits.map(x => `<button type="button" data-id="${esc(x[0])}"><strong>${esc(DEMOS[x[0]] ? '' : x[0])}</strong><span>${esc(x[1])}</span><small>${esc(x[2])}${x[3] ? '・' + esc(x[3]) : ''}</small></button>`).join('')
+      : `<p class="none">找不到「${esc(q.value.trim())}」。本站第一版只收上市和上櫃的股票與 ETF，興櫃查不到。</p>`;
+  });
+  q.addEventListener('keydown', e => {
+    if(e.key !== 'Enter') return;
+    track('search', q.value.trim());
+    if(hits[0]) location.hash = '#/s/' + hits[0][0];
+  });
+  box.addEventListener('click', e => {
+    const b = e.target.closest('button[data-id]');
+    if(!b) return;
+    track('search', q.value.trim());
+    location.hash = '#/s/' + b.dataset.id;
+  });
+}
+function errText(r){
+  if(!r) return '連不上資料伺服器，請稍後重新整理。';
+  if(r.error === 'nosetup') return '後端還沒有抓過資料。請到 Apps Script 執行一次 setup。';
+  if(r.error === 'notfound') return '找不到這個代號。本站第一版只收上市和上櫃的股票與 ETF。';
+  if(r.error === 'badid') return '代號格式不對，請回首頁重新搜尋。';
+  return '資料伺服器出了點問題' + (r.msg ? '（' + esc(r.msg) + '）' : '') + '，請稍後再試。';
+}
+
+/* ============ 個股頁的計算 ============ */
+function tick(p, etf){
+  if(etf) return p < 50 ? .01 : .05;
+  return p < 10 ? .01 : p < 50 ? .05 : p < 100 ? .1 : p < 500 ? .5 : p < 1000 ? 1 : 5;
+}
+function limits(close, etf){
+  const up = close * 1.1, dn = close * .9, tu = tick(up, etf), td = tick(dn, etf);
+  return { up: Math.floor(up / tu + 1e-6) * tu, dn: Math.ceil(dn / td - 1e-6) * td };
+}
+function sma(hist, n){
+  const out = []; let sum = 0;
+  hist.forEach((h, i) => { sum += h[4]; if(i >= n) sum -= hist[i - n][4]; if(i >= n - 1) out.push({ time: h[0], value: Math.round(sum / n * 100) / 100 }); });
+  return out;
+}
+function fillDays(hist, ex){
+  const i = hist.findIndex(h => h[0] >= ex);
+  if(i < 1 || hist[i][0] !== ex) return null;
+  const target = hist[i - 1][4];
+  for(let j = i; j < hist.length; j++) if(hist[j][4] >= target) return { days: j - i + 1, done: true };
+  return { days: hist.length - i, done: false };
+}
+const relWord = (cur, med) => !has(cur) || !med ? '' : cur / med > 1.1 ? '高' : cur / med < .9 ? '低' : '差不多';
+function ownWord(cur, s){
+  if(!s || !has(cur) || !(s.hi > s.lo)) return '';
+  const p = (cur - s.lo) / (s.hi - s.lo);
+  return p > .66 ? '偏高' : p < .33 ? '偏低' : '中間';
+}
+const pct = (a, b) => has(a) && has(b) && b !== 0 ? a / b * 100 : null;
+
+/* ============ 個股頁 ============ */
+let chart = null;
+async function renderStock(id){
+  const app = document.getElementById('app');
+  app.innerHTML = '<p class="loading">正在整理這檔股票的資料，第一次查會久一點</p>';
+  let d;
+  try { d = await api('stock', { id }); } catch { d = null; }
+  if(!DEMO && d && d.ok) await fillFromBrowser(d);
+  if(location.hash !== '#/s/' + id) return;
+  if(!d || !d.ok){
+    if(!d || d.error !== 'notfound') track('fetch_error', 'stock ' + id);
+    app.innerHTML = card('', '查不到資料', '', '', stateBox(errText(d)) + `<a class="btn" href="#/" style="text-align:center;text-decoration:none;color:#fff">回首頁</a>`);
+    return;
+  }
+  track('stock_view', id);
+  const hist = d.hist || [], src = d.src || {};
+  const lastH = hist.at(-1), prevH = hist.at(-2);
+  const day = d.day && has(d.day.close) ? d.day : lastH ? { date: lastH[0], close: lastH[4], chg: prevH ? lastH[4] - prevH[4] : null, open: lastH[1], high: lastH[2], low: lastH[3], vol: lastH[5], value: null } : null;
+  const prevClose = day && has(day.chg) ? day.close - day.chg : null;
+  const dayPct = pct(day && day.chg, prevClose);
+  const fin = d.fin || [], last4 = fin.slice(-4);
+  const ttmEps = last4.length === 4 && last4.every(x => has(x.eps)) ? last4.reduce((a, b) => a + b.eps, 0) : null;
+  const ttmNi = last4.length === 4 && last4.every(x => has(x.ni)) ? last4.reduce((a, b) => a + b.ni, 0) : null;
+  const lossQ = last4.filter(x => has(x.eps) && x.eps < 0).length;
+  const year = hist.slice(-250), hi52 = year.length ? Math.max(...year.map(h => h[2])) : null, lo52 = year.length ? Math.min(...year.map(h => h[3])) : null;
+  const pos52 = has(hi52) && hi52 > lo52 && day ? (day.close - lo52) / (hi52 - lo52) : null;
+  const short = hist.length > 0 && hist.length < 235;
+  const months = hist.length ? Math.max(1, Math.round(hist.length / 21)) : 0;
+  const ret1y = hist.length >= 250 ? (day.close / hist.at(-250)[4] - 1) * 100 : null;
+  const watch = store.get(KEY.watch, []);
+  const showId = DEMOS[id] ? '示範' : id;
+
+  /* 0 警示 */
+  const warnExplain = { '注意股':'attention', '處置股':'disposal', '變更交易':'altered', '暫停交易':'halt', '即將除權息':'exdiv' };
+  const warnPlain = {
+    '注意股':'最近漲跌或成交量異常，被交易所點名提醒。買賣方式沒有改變。',
+    '處置股':'處置期間改成每 5 分鐘或 20 分鐘才撮合一次，部分情況要先把錢或股票準備好才能下單。',
+    '變更交易':'公司財務方面有狀況，交易方式變嚴格，通常要先把錢交給券商才能買。',
+    '暫停交易':'目前不能買賣。',
+    '即將除權息':'除息日之前買進才領得到這次股利，除息當天股價會先扣掉股利。'
+  };
+  let warnHtml = (d.warn || []).map(w => `<div class="alert"><strong>${term(warnExplain[w.type] || 'attention', esc(w.type))}${w.date ? '（' + ymd(w.date) + '）' : ''}</strong>${warnPlain[w.type] || ''}${w.text ? `<small>${esc(w.text)}</small>` : ''}</div>`).join('');
+  if(!d.warnOk) warnHtml += stateBox('警示資料這次沒有完整抓到' + (d.warnMsg ? '（' + esc(d.warnMsg) + '）' : '') + '，下單前請到券商 App 再確認一次。');
+  else if(!(d.warn || []).length) warnHtml += `<p class="ok-line">目前沒有${term('attention')}、${term('disposal')}、${term('altered')}或${term('halt')}的紀錄。</p>`;
+
+  /* 一頁總結（規則套版，不是 AI 生成） */
+  const sum = [];
+  sum.push(`${esc(d.name)}是${esc(d.market)}的${d.isEtf ? ' ETF' : esc(d.industry || '') + '公司'}。`);
+  if(!d.isEtf && last4.length === 4) sum.push(lossQ === 0 ? '最近四季都有賺錢。' : lossQ === 4 ? '最近四季都是虧損。' : `最近四季裡有 ${lossQ} 季虧損。`);
+  if(has(ret1y)) sum.push(`股價和一年前相比${upDown(ret1y)}了 ${f(Math.abs(ret1y), 1)}%。`);
+  else if(short) sum.push(`掛牌還不到一年，只有大約 ${months} 個月的股價資料。`);
+  if(has(d.val.pe) && d.val.ind.pe) sum.push(`本益比 ${f(d.val.pe, 1)} 倍，${relWord(d.val.pe, d.val.ind.pe.med) === '差不多' ? '和' : '比'}同產業中位數 ${f(d.val.ind.pe.med, 1)} 倍${relWord(d.val.pe, d.val.ind.pe.med)}。`);
+  else if(!d.isEtf && has(ttmEps) && ttmEps <= 0) sum.push('因為最近四季合計是虧損，算不出本益比。');
+  const real = (d.warn || []).filter(w => w.type !== '即將除權息');
+  sum.push(real.length ? `目前有交易警示：${real.map(w => esc(w.type)).join('、')}。` : d.warnOk ? '目前沒有交易警示。' : '交易警示這次沒抓到，請另外確認。');
+
+  /* 1 今日概況 */
+  let today = stateBox('今天的行情還沒抓到。');
+  if(day){
+    const vol20 = hist.length > 21 ? hist.slice(-21, -1).reduce((a, b) => a + b[5], 0) / 20 : null;
+    const lots = has(day.vol) ? day.vol / 1000 : null;
+    const lim = limits(day.close, d.isEtf);
+    let cmp = '';
+    if(has(dayPct) && d.idx && has(d.idx.pct) && d.idx.date === day.date){
+      const a = dayPct, b = d.idx.pct;
+      cmp = `大盤今天${upDown(b)}${b ? ' ' + f(Math.abs(b)) + '%' : ''}，` +
+        (a * b < 0 ? '這檔的方向和大盤相反。' : Math.abs(a - b) < .3 ? '這檔和大盤差不多。' : `這檔${a > 0 ? '漲' : '跌'}得比大盤${Math.abs(a) > Math.abs(b) ? '多' : '少'}。`);
+    }
+    today = `<div class="row"><div class="row-head"><span class="row-label">收盤價</span><span class="big ${cls(day.chg)}">${f(day.close)}</span></div>
+        <div class="row-head"><span class="row-label">${term('chg')}</span><span class="row-value ${cls(day.chg)}">${signed(day.chg)}<small>元</small> ${has(dayPct) ? signed(dayPct) + '%' : ''}</span></div>
+        <p class="plain">${has(dayPct) ? `今天${upDown(dayPct)}${dayPct ? ' ' + f(Math.abs(dayPct)) + '%' : ''}。` : ''}${cmp}</p></div>`
+      + row({ k:'ohlc', label:'開盤／最高／最低', value:`${f(day.open)} / ${f(day.high)} / ${f(day.low)}`,
+          plain: has(day.high) && has(day.low) && prevClose ? `今天最高和最低差了 ${f((day.high - day.low) / prevClose * 100, 1)}%。` : '' })
+      + row({ k:'vol', value: f(lots, 0), unit:'張', plain: vol20 && lots ? `大約是它自己最近 20 天平均的 ${f(day.vol / vol20, 1)} 倍。${day.vol / vol20 > 2 ? '今天交易比平常熱絡很多。' : day.vol / vol20 < .5 ? '今天交易比平常冷清。' : ''}` : '' })
+      + (has(day.value) ? row({ k:'value', value: big(day.value).replace(/ ?元$/, ''), unit:'元' }) : '')
+      + row({ k:'limit', label:'下一個交易日的漲停與跌停價', value:`${f(lim.up)} / ${f(lim.dn)}`, unit:'估算',
+          plain:`下一個交易日最高只能到 ${f(lim.up)} 元，最低只能到 ${f(lim.dn)} 元。買一${term('lot')}大約要 ${big(day.close * 1000)}，不夠的話可以買${term('odd')}。` });
+  }
+
+  /* 2 公司 */
+  let company;
+  if(d.isEtf) company = stateBox('這是一檔 ETF，不是單一公司。追蹤指數、成分股、管理費和折溢價這些 ETF 專用的資訊，會在下一版加入。') + `<p class="plain">${term('etf', 'ETF 是什麼？')}</p>`;
+  else {
+    const c = d.co, yrs = c && c.listed ? Math.floor((Date.now() - new Date(c.listed)) / 3.156e10) : null;
+    company = `<dl class="kv"><dt>產業</dt><dd>${esc(d.industry || '沒有資料')}</dd><dt>市場</dt><dd>${term('market', esc(d.market))}</dd>
+      ${c ? `<dt>公司全名</dt><dd>${esc(c.full)}</dd><dt>董事長</dt><dd>${esc(c.chairman || '沒有資料')}</dd>
+      <dt>掛牌日</dt><dd>${c.listed ? ymd(c.listed) + (has(yrs) ? `（${yrs < 1 ? '不到 1' : yrs} 年）` : '') : '沒有資料'}</dd>
+      <dt>成立日</dt><dd>${c.founded ? ymd(c.founded) : '沒有資料'}</dd>
+      ${c.web ? `<dt>官網</dt><dd><a href="${esc(/^https?:/.test(c.web) ? c.web : 'https://' + c.web)}" target="_blank" rel="noopener">${esc(c.web.replace(/^https?:\/\//, ''))}</a></dd>` : ''}` : ''}</dl>`
+      + (d.mcap ? row({ k:'mcap', value: big(d.mcap.value).replace(/ ?元$/, ''), unit:'元', plain:`在 ${f(d.mcap.total, 0)} 檔上市櫃股票裡排第 ${f(d.mcap.rank, 0)} 名，${d.mcap.rank / d.mcap.total < .1 ? '屬於大型公司' : d.mcap.rank / d.mcap.total < .4 ? '屬於中型公司' : '屬於小型公司，股價通常波動比較大'}。` }) : row({ k:'mcap', na:'公司基本資料沒抓到，算不出市值' }))
+      + (c && has(c.capital) ? row({ k:'capital', value: big(c.capital).replace(/ ?元$/, ''), unit:'元', plain:`總共發行大約 ${f(c.shares / 1e8, 1)} 億股。` }) : '')
+      + stateBox('公司主要業務的文字介紹，目前沒有免費的公開資料來源，所以這裡先只列產業別。想知道它實際賣什麼，可以看官網或公開資訊觀測站的年報。');
+  }
+
+  /* 3 走勢 */
+  let trend;
+  if(!src.price || !src.price.ok || !hist.length) trend = stateBox('歷史股價這次沒抓到' + (src.price && src.price.msg ? '（' + esc(src.price.msg) + '）' : '') + '。');
+  else {
+    const ma20 = hist.length >= 20 ? hist.slice(-20).reduce((a, b) => a + b[4], 0) / 20 : null;
+    trend = `<div class="ranges" id="ranges">${[['1 個月', 22], ['3 個月', 66], ['1 年', 250], ['5 年', 1300]].map((x, i) => `<button type="button" data-n="${x[1]}" class="${i === 2 ? 'on' : ''}">${x[0]}</button>`).join('')}</div>
+      <div class="legend" id="legend"></div><div id="kline"></div>
+      <p class="hint">${term('kline', '怎麼看 K 線？')}　圖上標「息」的地方是除息日，${term('gap', '為什麼那天看起來像大跌？')}</p>`
+      + (short ? row({ k:'range52', label:'掛牌以來的高低點', value:`${f(hi52)} / ${f(lo52)}`, unit:'最高 / 最低', plain:`掛牌還不到一年，只有大約 ${months} 個月的資料，所以沒辦法畫 1 年和 5 年的走勢，下面的位置也只能用掛牌以來的範圍算。` })
+        : row({ k:'range52', value:`${f(hi52)} / ${f(lo52)}`, unit:'最高 / 最低',
+          bar: posBar('過去一年的價格範圍', { lo: lo52, hi: hi52, med: year.map(h => h[4]).sort((a, b) => a - b)[Math.floor(year.length / 2)] }, day.close, ''),
+          plain: has(pos52) ? `現在的價格在過去一年最高與最低之間，大約 ${Math.round(pos52 * 10)} 成的位置${has(ret1y) ? `，和一年前相比${upDown(ret1y)} ${f(Math.abs(ret1y), 1)}%` : ''}。` : '' }))
+      + (has(ma20) ? row({ k:'ma', label:'20 日均線', value: f(ma20), unit:'元', plain:`收盤價在 20 日均線${day.close >= ma20 ? '上面' : '下面'}，代表最近一個月買的人，平均來說目前是${day.close >= ma20 ? '賺' : '賠'}的。` }) : '');
+  }
+
+  /* 4 估值 */
+  const v = d.val;
+  function valRow(k, cur, unit, own, ind, plainFn, naText){
+    if(!has(cur)) return row({ k, na: naText });
+    const w1 = ind ? relWord(cur, ind.med) : '', w2 = ownWord(cur, own);
+    const cmp = (ind ? `${w1 === '差不多' ? '和' : '比'}同產業中位數 ${f(ind.med)}${unit === '%' ? '%' : ' 倍'}${w1}` : '同產業的資料不夠，沒辦法比')
+      + (w2 ? `，在它自己過去 5 年的範圍裡算${w2}` : '') + '。';
+    return row({ k, value: f(cur), unit, plain: plainFn(cur) + cmp,
+      bar: posBar(ind ? `同產業 ${ind.n} 檔（去掉最高和最低各 5%）` : '', ind, cur, unit === '%' ? '%' : '') + posBar('它自己過去 5 年', own, cur, unit === '%' ? '%' : '') });
+  }
+  const value = d.isEtf
+    ? row({ k:'pe', na:'ETF 是一籃子股票，沒有單一的本益比' }) + (has(v.dy) ? row({ k:'dy', value: f(v.dy), unit:'%', plain:`用現在的價格買，照最近的配息算，一年大約拿回 ${f(v.dy)}%。` }) : '')
+    : valRow('pe', v.pe, '倍', v.own.pe, v.ind.pe, x => `照現在的股價，假設公司賺錢的速度不變，大約要 ${Math.round(x)} 年才賺回你付的錢。`,
+        has(ttmEps) && ttmEps <= 0 ? '最近四季合計是虧損，所以算不出本益比' : '這次沒有本益比資料')
+      + valRow('pb', v.pb, '倍', v.own.pb, v.ind.pb, x => `股價是每股帳面價值的 ${f(x)} 倍。`, '這次沒有股價淨值比資料')
+      + valRow('dy', v.dy, '%', v.own.dy, v.ind.dy, x => `用現在的價格買，照最近一次的股利算，一年大約拿回 ${f(x)}%。`, (d.div || []).length ? '這次沒有殖利率資料' : '這家公司近年沒有發放股利，所以沒有殖利率')
+      + `<p class="hint">位置條上的圓點是現在的數值，金色短線是${term('median')}。位置條只告訴你落在哪裡，高或低本身不代表好或壞。</p>`;
+
+  /* 5 獲利 */
+  let profit;
+  if(d.isEtf) profit = stateBox('ETF 不是公司，沒有營收和每股盈餘。');
+  else {
+    const rv = d.rev || [], lr = rv.at(-1);
+    let streak = 0;
+    for(let i = rv.length - 1; i >= 0 && has(rv[i][2]) && (rv[i][2] > 0) === (lr[2] > 0); i--) streak++;
+    const revPart = !src.rev || !src.rev.ok || !lr ? row({ k:'rev', na:'月營收這次沒抓到' })
+      : row({ k:'rev', label:`月營收（${+lr[0].slice(5)} 月）`, value: big(lr[1]).replace(/ ?元$/, ''), unit:'元',
+          plain: has(lr[2]) ? `和去年同一個月相比${lr[2] >= 0 ? '多' : '少'}了 ${f(Math.abs(lr[2]), 1)}%${streak >= 3 ? `，已經連續 ${streak} 個月${lr[2] > 0 ? '成長' : '衰退'}` : ''}。${term('yoy', '為什麼要和去年比？')}` : '去年同月沒有資料，算不出年增率。',
+          extra: barChart(rv.map(x => ({ l: x[0].slice(2).replace('-', '/'), v: x[1] / 1e8 })), x => f(x, 1) + ' 億', '近 24 個月營收') });
+    let finPart;
+    if(!src.fin || !src.fin.ok || !fin.length) finPart = row({ k:'eps', na:'財報這次沒抓到' });
+    else {
+      const lq = fin.at(-1), m = (a, b) => pct(a, b);
+      const gms = fin.map(x => m(x.gp, x.rev)), g = gms.slice(-3);
+      const gTrend = g.length === 3 && g.every(has) ? (g[2] < g[1] && g[1] < g[0] ? '已經連續兩季下滑。' : g[2] > g[1] && g[1] > g[0] ? '已經連續兩季上升。' : '最近幾季沒有明顯的方向。') : '';
+      const bank = /金融|保險|證券|銀行/.test(d.industry || '');
+      finPart = row({ k:'eps', label:`每股盈餘（${lq.q}）`, value: f(lq.eps), unit:'元',
+          plain: (has(ttmEps) ? `最近四季合計每股${ttmEps >= 0 ? '賺' : '虧'} ${f(Math.abs(ttmEps))} 元。` : '') + (last4.length === 4 ? (lossQ === 0 ? '四季都有賺錢。' : `四季裡有 ${lossQ} 季是虧損。`) : ''),
+          extra: barChart(fin.map(x => ({ l: x.q.slice(2), v: x.eps })), x => f(x) + ' 元', '近 8 季每股盈餘') })
+        + (has(gms.at(-1)) ? row({ k:'gm', value: f(gms.at(-1), 1), unit:'%', plain:`每賣 100 元，扣掉直接成本後剩 ${f(gms.at(-1), 1)} 元。${gTrend}` })
+            : row({ k:'gm', na: bank ? '金融業的財報沒有毛利這一項' : '這一季沒有毛利資料' }))
+        + (has(m(lq.oi, lq.rev)) ? row({ k:'om', value: f(m(lq.oi, lq.rev), 1), unit:'%', plain: lq.oi >= 0 ? `本業每做 100 元生意，賺 ${f(m(lq.oi, lq.rev), 1)} 元。` : `本業每做 100 元生意，要賠 ${f(Math.abs(m(lq.oi, lq.rev)), 1)} 元。` })
+            : row({ k:'om', na: bank ? '金融業不適用這個指標' : '這一季沒有營業利益資料' }))
+        + (has(m(lq.ni, lq.rev)) ? row({ k:'nm', value: f(m(lq.ni, lq.rev), 1), unit:'%', plain: lq.ni >= 0 ? `所有成本和稅都算完後，每 100 元營收留下 ${f(m(lq.ni, lq.rev), 1)} 元。` : '所有成本算完後這一季是虧損。' }) : row({ k:'nm', na:'這一季沒有淨利資料' }))
+        + `<details class="more"><summary>近 ${fin.length} 季完整數字</summary><div class="scroll"><table class="data"><tr><th>季度</th><th>營收</th><th>毛利率</th><th>營益率</th><th>淨利率</th><th>每股盈餘</th></tr>
+          ${fin.slice().reverse().map(x => `<tr><td>${x.q}</td><td>${has(x.rev) ? f(x.rev / 1e8, 1) + ' 億' : '無'}</td><td>${has(m(x.gp, x.rev)) ? f(m(x.gp, x.rev), 1) + '%' : '無'}</td><td>${has(m(x.oi, x.rev)) ? f(m(x.oi, x.rev), 1) + '%' : '無'}</td><td>${has(m(x.ni, x.rev)) ? f(m(x.ni, x.rev), 1) + '%' : '無'}</td><td>${has(x.eps) ? f(x.eps) : '無'}</td></tr>`).join('')}</table></div></details>`;
+      const bs = d.bs, roe = bs && has(ttmNi) ? pct(ttmNi, bs.equity) : null, debt = bs ? pct(bs.liab, bs.assets) : null;
+      finPart += (has(roe) ? row({ k:'roe', value: f(roe, 1), unit:'%', plain: roe >= 0 ? `股東每投入 100 元，公司最近一年賺回 ${f(roe, 1)} 元。` : '最近一年是虧損，股東的錢變少了。' }) : row({ k:'roe', na:'資產負債表這次沒抓到，算不出來' }))
+        + (has(debt) ? row({ k:'debt', value: f(debt, 1), unit:'%', plain:`公司的資產裡有 ${f(debt, 0)}% 是借來的。${bank ? '金融業的負債主要是客戶的存款和保單，這個數字高是正常的。' : debt > 70 ? '這個比例偏高，景氣不好的時候還債壓力會比較大。' : ''}` }) : row({ k:'debt', na:'資產負債表這次沒抓到，算不出來' }));
+      const cf = d.cf;
+      finPart += cf && has(cf.ocf) ? row({ k:'ocf', label:'營業現金流（最近四季）', value: big(cf.ocf).replace(/ ?元$/, ''), unit:'元',
+            plain: (cf.ocf >= 0 ? '本業有實際收到現金。' : '本業實際上是現金流出。') + (has(ttmNi) && ttmNi > 0 && cf.ocf < 0 ? '帳上有賺錢但現金沒有進來，可以多留意。' : '') })
+          + (has(cf.capex) ? row({ k:'fcf', label:'自由現金流（最近四季）', value: big(cf.ocf - cf.capex).replace(/ ?元$/, ''), unit:'元', plain: cf.ocf < 0 ? `本業已經是現金流出，再加上買設備和蓋廠房的 ${big(cf.capex)}，流出的更多。` : `扣掉買設備和蓋廠房的 ${big(cf.capex)}之後${cf.ocf - cf.capex >= 0 ? '還有剩' : '是負的，代表投資花的錢比本業收進來的多'}。` }) : row({ k:'fcf', na:'資本支出沒抓到，算不出來' }))
+        : row({ k:'ocf', na:'現金流量表這次沒抓到，或資料不滿四季' });
+    }
+    profit = revPart + finPart;
+  }
+
+  /* 6 股利 */
+  let dividend;
+  const dv = d.div || [];
+  if(!src.div || !src.div.ok) dividend = stateBox('股利資料這次沒抓到。');
+  else if(!dv.length) dividend = stateBox(`近 10 年沒有發放股利的紀錄。${lossQ ? '公司最近有虧損，沒有盈餘可以分配。' : ''}`) + `<p class="plain">${term('cashdiv', '現金股利是什麼？')}</p>`;
+  else {
+    const ld = dv.at(-1);
+    let cont = 0;
+    for(let i = dv.length - 1; i >= 0 && dv[i].cash > 0 && (i === dv.length - 1 || +dv[i + 1].y - +dv[i].y === 1); i--) cont++;
+    const fl = ld.ex && ld.ex.length ? fillDays(hist, ld.ex.at(-1)[0]) : null;
+    const prevY = fin.filter(x => x.q.slice(0, 4) == +ld.y - 1);
+    const epsPrev = prevY.length === 4 ? prevY.reduce((a, b) => a + b.eps, 0) : null;
+    const pay = has(epsPrev) && epsPrev > 0 ? ld.cash / epsPrev * 100 : null;
+    const partial = ld.y == new Date().getFullYear();
+    dividend = row({ k:'cashdiv', label:`現金股利（${ld.y} 年${partial ? '到目前為止' : '發放'}）`, value: f(ld.cash, 2), unit:'元／股',
+        plain:`持有一張（1,000 股）可以領到 ${f(ld.cash * 1000, 0)} 元${ld.ex && ld.ex.length > 1 ? `，分 ${ld.ex.length} 次發` : ''}。${cont >= dv.length ? `資料裡的 ${cont} 年每年都有配現金。` : `已經連續 ${cont} 年有配現金。`}`,
+        extra: barChart(dv.map(x => ({ l: x.y, v: x.cash })), x => f(x, 2) + ' 元', '歷年現金股利') })
+      + (ld.stock ? row({ k:'stockdiv', value: f(ld.stock, 2), unit:'元／股', plain:`持有一張會多拿到 ${f(ld.stock * 100, 0)} 股。` }) : '')
+      + (fl ? row({ k:'fill', label:`填息（${ymd(ld.ex.at(-1)[0])} 除息）`, value: fl.done ? f(fl.days, 0) : '還沒填息', unit: fl.done ? '個交易日' : '',
+          plain: fl.done ? `除息後花了 ${fl.days} 個交易日，收盤價回到除息前的水準。` : `除息到現在 ${fl.days} 個交易日，收盤價還沒回到除息前的水準。` }) : row({ k:'fill', na:'最近一次除息日不在股價資料範圍內，算不出來' }))
+      + (partial ? row({ k:'payout', na:'今年的股利還沒發完，年底再算比較準' }) : has(pay) ? row({ k:'payout', label:'配發率（估算）', value: f(pay, 0), unit:'%', plain:`大約把前一年賺的錢拿 ${f(pay, 0)}% 出來發現金。${pay > 100 ? '發的比賺的多，這種情況通常沒辦法長期維持。' : ''}` }) : row({ k:'payout', na:'前一年的四季財報不齊，算不出來' }))
+      + `<details class="more"><summary>歷年股利完整數字</summary><div class="scroll"><table class="data"><tr><th>發放年度</th><th>現金股利</th><th>股票股利</th><th>除息日</th></tr>
+        ${dv.slice().reverse().map(x => `<tr><td>${x.y}</td><td>${f(x.cash, 2)}</td><td>${f(x.stock, 2)}</td><td>${(x.ex || []).map(e => md(e[0])).join('、') || '無'}</td></tr>`).join('')}</table></div></details>`;
+  }
+
+  const FM = 'FinMind';
+  app.innerHTML = `${DEMO ? `<p class="banner">這是<strong>示範資料</strong>，公司和數字都是虛構的。</p>` : ''}
+    <section class="card"><div class="title-row"><h1>${esc(d.name)}</h1><span class="tag">${esc(showId)}</span><span class="tag">${esc(d.market)}</span>${d.industry ? `<span class="tag">${esc(d.industry)}</span>` : ''}
+      <button class="star" id="star" type="button">${watch.includes(id) ? '已加入自選' : '加入自選'}</button></div></section>
+    ${card('s-warn', '有沒有警示', '下單之前最該先知道的事', srcTag('', d.market === '上市' ? '證交所' : '櫃買中心'), warnHtml)}
+    ${card('s-sum', '一頁總結', '', '', `<ul class="summary-list">${sum.map(s => `<li>${s}</li>`).join('')}</ul><p class="hint">這幾句話是用固定規則從下面的數字整理出來的，只描述現況，沒有任何買賣建議。</p>`)}
+    ${card('s-today', '今日概況', '今天收在哪裡，和大盤比怎麼樣', day ? srcTag(day.date, d.market === '上市' ? '證交所' : '櫃買中心') : '', today)}
+    ${card('s-co', '公司在做什麼', '', srcTag('', d.market === '上市' ? '證交所' : '櫃買中心'), company)}
+    ${card('s-trend', '股價走勢', '現在的價格在過去的什麼位置', lastH ? srcTag(lastH[0], FM) : '', trend)}
+    ${card('s-val', '貴不貴', '和同業比、和它自己的過去比', srcTag(v.date, '證交所、櫃買中心、' + FM), value)}
+    ${card('s-profit', '有沒有賺錢', '營收、獲利和體質', fin.length ? srcTag(fin.at(-1).date, FM) : '來源：' + FM, profit)}
+    ${card('s-div', '股利', '每年發多少，發完漲不漲得回來', '來源：' + FM, dividend)}
+    ${card('s-check', '看完了嗎', '五個問題，點了會帶你回到對應的區塊', '', `<ol class="check">
+      ${[['s-co', '我知道這家公司靠什麼賺錢嗎？'], ['s-profit', '它最近有沒有賺錢？'], ['s-val', '現在的價格和同業、和它自己的過去比起來如何？'], ['s-warn', '它有沒有交易警示或處置？'], ['s-trend', '如果跌 30%，我承受得住嗎？']]
+        .map((x, i) => `<li><button type="button" data-goto="${x[0]}" data-n="${i + 1}">${i + 1}. ${x[1]}</button></li>`).join('')}</ol>`)}
+    <p class="hint" style="text-align:center">法人買賣、融資融券、技術指標和重大訊息會在下一版加入。</p>`;
+
+  document.getElementById('star').onclick = e => {
+    let w = store.get(KEY.watch, []);
+    if(w.includes(id)) w = w.filter(x => x !== id); else { w.push(id); track('watchlist_add', id); }
+    store.set(KEY.watch, w);
+    e.target.textContent = w.includes(id) ? '已加入自選' : '加入自選';
+  };
+  if(hist.length && src.price && src.price.ok) drawChart(hist, dv);
+  scrollTo(0, 0);
+}
+
+function drawChart(hist, dv){
+  const el = document.getElementById('kline'), legend = document.getElementById('legend');
+  if(chart){ try { chart.remove(); } catch {} chart = null; }
+  if(!window.LightweightCharts){ el.outerHTML = stateBox('圖表套件沒有載入成功，重新整理頁面試試看。數字不受影響。'); return; }
+  const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+  const up = css('--up'), down = css('--down');
+  chart = LightweightCharts.createChart(el, {
+    autoSize: true, layout: { background: { color: '#ffffff' }, textColor: css('--muted'), fontSize: 11 },
+    grid: { vertLines: { visible: false }, horzLines: { color: css('--line') } },
+    rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false, rightOffset: 2 },
+    localization: { locale: 'zh-TW', dateFormat: 'yyyy/MM/dd' }, handleScale: { axisPressedMouseMove: false }
+  });
+  const candle = chart.addCandlestickSeries({ upColor: up, downColor: down, borderUpColor: up, borderDownColor: down, wickUpColor: up, wickDownColor: down, priceLineVisible: false });
+  candle.setData(hist.map(h => ({ time: h[0], open: h[1], high: h[2], low: h[3], close: h[4] })));
+  const volume = chart.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
+  chart.priceScale('vol').applyOptions({ scaleMargins: { top: .82, bottom: 0 }, visible: false });
+  volume.setData(hist.map(h => ({ time: h[0], value: h[5], color: h[4] >= h[1] ? 'rgba(210,60,60,.3)' : 'rgba(22,135,90,.3)' })));
+  const mas = [[5, '--ma5'], [20, '--ma20'], [60, '--ma60']].map(([n, c]) => {
+    const s = chart.addLineSeries({ color: css(c), lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    s.setData(sma(hist, n));
+    return { n, c, s };
+  });
+  const dates = new Set(hist.map(h => h[0])), marks = [];
+  dv.forEach(x => (x.ex || []).forEach(e => { if(dates.has(e[0])) marks.push({ time: e[0], position: 'aboveBar', color: '#8a97a8', shape: 'arrowDown', text: '息' }); }));
+  candle.setMarkers(marks.sort((a, b) => a.time < b.time ? -1 : 1));
+  const byDate = new Map(hist.map(h => [h[0], h]));
+  function setLegend(time, param){
+    const h = byDate.get(time) || hist.at(-1);
+    legend.innerHTML = `<span>${ymd(h[0])}　開 ${f(h[1])}　高 ${f(h[2])}　低 ${f(h[3])}　收 ${f(h[4])}　量 ${f(h[5] / 1000, 0)} 張</span>`
+      + mas.map(m => { const v = param && param.seriesData.get(m.s); return `<span><i style="background:var(${m.c})"></i>${m.n} 日均線${v ? ' ' + f(v.value) : ''}</span>`; }).join('');
+  }
+  setLegend(null, null);
+  chart.subscribeCrosshairMove(p => setLegend(p && p.time, p && p.time ? p : null));
+  function range(n){
+    const from = hist[Math.max(0, hist.length - n)][0];
+    chart.timeScale().setVisibleRange({ from, to: hist.at(-1)[0] });
+  }
+  range(250);
+  document.getElementById('ranges').onclick = e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    document.querySelectorAll('#ranges button').forEach(x => x.classList.toggle('on', x === b));
+    range(+b.dataset.n);
+  };
+}
+
+/* ============ 名詞表、關於 ============ */
+function renderGlossary(){
+  document.getElementById('app').innerHTML = card('', '名詞表', '點任何一個名詞看解釋', '',
+    CATS.map(c => `<h3 class="gl-cat">${c}</h3><div class="gl-list">${Object.keys(G).filter(k => G[k].cat === c).map(k => `<button type="button" class="chip" data-term="${k}">${G[k].t}</button>`).join('')}</div>`).join(''));
+}
+async function renderAbout(){
+  const app = document.getElementById('app');
+  const h = DEMO ? { ok:true, src:{} } : await api('home').catch(() => null);
+  const src = (h && h.src) || {};
+  app.innerHTML = card('', '關於這個網站', '', '', `
+    <p class="plain" style="display:block">這個網站想做的事很單純：讓第一次看股票的人，可以在同一頁把一檔股票看懂。專業投資人看得到的公開數字這裡都有，差別只在每個數字旁邊多了一句白話。</p>
+    <p class="plain" style="display:block;margin-top:8px">所有內容只描述數字本身和它的相對位置，不提供買賣建議。</p>`)
+  + card('', '資料從哪裡來', '', '', `<dl class="kv">
+      <dt>每日行情、估值、大盤</dt><dd><a href="https://openapi.twse.com.tw/" target="_blank" rel="noopener">證交所 OpenAPI</a>、<a href="https://www.tpex.org.tw/openapi/" target="_blank" rel="noopener">櫃買中心 OpenAPI</a></dd>
+      <dt>歷史股價、財報、股利</dt><dd><a href="https://finmind.github.io/" target="_blank" rel="noopener">FinMind</a></dd>
+      <dt>更新時間</dt><dd>每個交易日傍晚自動抓一次，所以白天看到的是前一個交易日的資料。</dd></dl>
+    ${Object.keys(src).length ? `<div class="scroll"><table class="data" style="margin-top:10px"><tr><th>來源</th><th>資料日期</th><th>抓取時間</th><th>狀態</th></tr>
+      ${Object.entries(src).map(([k, s]) => `<tr><td>${esc(k)}</td><td>${esc(s.date || '無')}</td><td>${esc(s.at || '')}</td><td>${s.ok ? '正常' : '沒抓到'}</td></tr>`).join('')}</table></div>` : ''}`)
+  + card('', '目前沒有的東西', '', '', `<ul class="summary-list" style="display:block">
+      <li>即時報價。這裡全部是盤後資料。</li><li>興櫃股票。</li><li>ETF 的成分股、費用與折溢價。</li>
+      <li>法人買賣、融資融券、技術指標、重大訊息。</li><li>還原權息後的股價。圖上的價格是原始價格，除息日會有缺口。</li></ul>`);
+}
+
+/* ============ 名詞小卡、導覽、提示 ============ */
+const overlay = document.getElementById('overlay');
+function openTerm(k){
+  const g = G[k];
+  if(!g) return;
+  track('term_open', g.t);
+  overlay.innerHTML = `<div class="sheet-bg" data-close><div class="sheet" role="dialog" aria-label="${esc(g.t)}">
+    <button class="close" type="button" data-close>關閉</button><h3>${g.t}</h3><p>${g.def}</p>
+    <h4>舉個例子</h4><p>${g.eg}</p><h4>常見誤解</h4><p>${g.myth}</p>
+    ${g.calc ? `<h4>怎麼算</h4><p>${g.calc}</p>` : ''}${g.how ? `<h4>怎麼看</h4><p>${g.how}</p>` : ''}${g.care ? `<h4>要小心</h4><p>${g.care}</p>` : ''}</div></div>`;
+}
+const TOUR = [
+  ['紅色是漲，綠色是跌', '台灣股市的習慣和美國網站相反。在這裡看到紅色的數字，代表上漲。'],
+  ['這裡的數字不是即時的', '所有資料都是收盤後才更新。白天開盤時看到的，是前一個交易日的數字。要下單請看券商 App 的即時報價。'],
+  ['看到虛線就可以點', '有虛線底線的字都是專有名詞，點一下會跳出白話解釋和例子。看熟了之後，右上角可以切換成精簡模式。']
+];
+function tour(i){
+  overlay.innerHTML = `<div class="sheet-bg"><div class="sheet" role="dialog"><h3>${TOUR[i][0]}</h3><p>${TOUR[i][1]}</p>
+    <button class="btn" type="button" id="tourNext">${i < TOUR.length - 1 ? '下一步' : '開始使用'}</button><p class="dots">${i + 1} / ${TOUR.length}</p></div></div>`;
+  document.getElementById('tourNext').onclick = () => { if(i < TOUR.length - 1) tour(i + 1); else { overlay.innerHTML = ''; store.set(KEY.tour, 1); } };
+}
+const tip = document.getElementById('tip');
+function showTip(t){
+  const r = t.getBoundingClientRect();
+  tip.textContent = t.dataset.tip;
+  tip.hidden = false;
+  tip.style.left = Math.max(70, Math.min(innerWidth - 70, r.left + r.width / 2)) + 'px';
+  tip.style.top = Math.max(40, r.top + 24) + 'px';
+}
+document.addEventListener('pointerover', e => { const t = e.target.closest && e.target.closest('[data-tip]'); if(t) showTip(t); else tip.hidden = true; });
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-term]');
+  if(t){ openTerm(t.dataset.term); return; }
+  if(e.target.matches('[data-close]')){ overlay.innerHTML = ''; return; }
+  const g = e.target.closest('[data-goto]');
+  if(g){ track('checklist_click', g.dataset.n); document.getElementById(g.dataset.goto).scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  const bar = e.target.closest('[data-tip]');
+  if(bar) showTip(bar);
+  if(!e.target.closest('.search')){ const s = document.getElementById('sugg'); if(s) s.hidden = true; }
+});
+document.addEventListener('toggle', e => { if(e.target.matches && e.target.matches('details[data-metric]') && e.target.open) track('expand', e.target.dataset.metric); }, true);
+document.addEventListener('scroll', () => { tip.hidden = true; }, { passive: true });
+
+/* ============ 模式與路由 ============ */
+const modeBtn = document.getElementById('modeBtn');
+function setMode(m){
+  document.body.classList.toggle('compact', m === 'compact');
+  modeBtn.textContent = m === 'compact' ? '精簡模式' : '新手模式';
+  modeBtn.setAttribute('aria-label', '目前是' + modeBtn.textContent + '，點一下切換');
+  store.set(KEY.mode, m);
+}
+modeBtn.onclick = () => { const m = document.body.classList.contains('compact') ? 'newbie' : 'compact'; setMode(m); track('mode_switch', m === 'compact' ? '精簡' : '新手'); };
+
+function route(){
+  overlay.innerHTML = ''; tip.hidden = true;
+  if(chart){ try { chart.remove(); } catch {} chart = null; }
+  const h = location.hash.replace(/^#\/?/, '');
+  if(h.startsWith('s/')) renderStock(decodeURIComponent(h.slice(2)).toUpperCase());
+  else if(h === 'glossary') renderGlossary();
+  else if(h === 'about') renderAbout();
+  else renderHome();
+}
+addEventListener('hashchange', route);
+setMode(store.get(KEY.mode, 'newbie'));
+route();
+if(!store.get(KEY.tour, 0)) tour(0);
+track('start');
+</script>
+</body>
+</html>
