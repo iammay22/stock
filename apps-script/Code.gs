@@ -104,7 +104,10 @@ function writeSheet_(name, rows) {
   var clean = rows.map(function (r) {
     return r.map(function (x) { return x === null || x === undefined ? '' : x; });
   });
-  sh.getRange(2, 1, clean.length, cols).setValues(clean);
+  // 全部存成純文字：不然 0050 會被試算表當成數字 50，日期也會被改格式
+  var range = sh.getRange(2, 1, clean.length, cols);
+  range.setNumberFormat('@');
+  range.setValues(clean.map(function (r) { return r.map(function (x) { return String(x); }); }));
 }
 
 var memo_ = {};
@@ -440,7 +443,7 @@ function list_() {
   var q = readSheet_('quotes');
   if (!q.length) return { ok: false, error: 'nosetup' };
   return {
-    ok: true,
+    ok: true, ver: ver_(),
     list: q.map(function (r) {
       var c = comp[r[0]];
       return [r[0], (c && c[1]) || r[1], r[2], c ? c[4] : (/^00/.test(r[0]) ? 'ETF' : '')];

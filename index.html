@@ -154,7 +154,7 @@ footer p{margin:4px 0}
 /* ============ 設定 ============ */
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbxFJnZeocVet7lv2QXI2MjF20qTH_7CmYzlgpT5VSCe6FTNj2Jjbt7SiQWl6VSIs5Ci/exec'; // Apps Script 網頁應用程式網址；留空會用示範資料
 const DEMO = !ENDPOINT;
-const KEY = { mode: 'twstock-mode-v1', watch: 'twstock-watch-v1', tour: 'twstock-tour-v1', list: 'twstock-list-v1' };
+const KEY = { mode: 'twstock-mode-v1', watch: 'twstock-watch-v1', tour: 'twstock-tour-v1', list: 'twstock-list-v2' };
 
 const store = {
   get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
@@ -314,11 +314,11 @@ async function api(action, params = {}){
   return out;
 }
 async function getList(){
-  const today = new Date().toISOString().slice(0, 10);
+  // 清單存在瀏覽器 3 小時，省得每次都向後端要
   const c = store.get(KEY.list, null);
-  if(!DEMO && c && c.day === today && c.list && c.list.length) return c.list;
+  if(!DEMO && c && Date.now() - c.at < 3 * 3600e3 && c.list && c.list.length) return c.list;
   const r = await api('list');
-  if(r && r.ok){ if(!DEMO) store.set(KEY.list, { day: today, list: r.list }); return r.list; }
+  if(r && r.ok){ if(!DEMO) store.set(KEY.list, { at: Date.now(), list: r.list }); return r.list; }
   return [];
 }
 
@@ -608,7 +608,10 @@ async function renderStock(id){
   track('stock_view', id);
   const hist = d.hist || [], src = d.src || {};
   const lastH = hist.at(-1), prevH = hist.at(-2);
-  const day = d.day && has(d.day.close) ? d.day : lastH ? { date: lastH[0], close: lastH[4], chg: prevH ? lastH[4] - prevH[4] : null, open: lastH[1], high: lastH[2], low: lastH[3], vol: lastH[5], value: null } : null;
+  const iso = x => String(x || '').replace(/\//g, '-');
+  const fromHist = lastH ? { date: lastH[0], close: lastH[4], chg: prevH ? Math.round((lastH[4] - prevH[4]) * 100) / 100 : null, open: lastH[1], high: lastH[2], low: lastH[3], vol: lastH[5], value: null, src: 'FinMind' } : null;
+  // 證交所的當日行情傍晚才更新，FinMind 有時候比較早；哪邊日期新就用哪邊
+  const day = d.day && has(d.day.close) && !(fromHist && lastH[0] > iso(d.day.date)) ? { ...d.day, date: iso(d.day.date) } : fromHist;
   const prevClose = day && has(day.chg) ? day.close - day.chg : null;
   const dayPct = pct(day && day.chg, prevClose);
   const fin = d.fin || [], last4 = fin.slice(-4);
@@ -654,7 +657,7 @@ async function renderStock(id){
     const lots = has(day.vol) ? day.vol / 1000 : null;
     const lim = limits(day.close, d.isEtf);
     let cmp = '';
-    if(has(dayPct) && d.idx && has(d.idx.pct) && d.idx.date === day.date){
+    if(has(dayPct) && d.idx && has(d.idx.pct) && iso(d.idx.date) === day.date){
       const a = dayPct, b = d.idx.pct;
       cmp = `大盤今天${upDown(b)}${b ? ' ' + f(Math.abs(b)) + '%' : ''}，` +
         (a * b < 0 ? '這檔的方向和大盤相反。' : Math.abs(a - b) < .3 ? '這檔和大盤差不多。' : `這檔${a > 0 ? '漲' : '跌'}得比大盤${Math.abs(a) > Math.abs(b) ? '多' : '少'}。`);
@@ -716,7 +719,7 @@ async function renderStock(id){
         has(ttmEps) && ttmEps <= 0 ? '最近四季合計是虧損，所以算不出本益比' : '這次沒有本益比資料')
       + valRow('pb', v.pb, '倍', v.own.pb, v.ind.pb, x => `股價是每股帳面價值的 ${f(x)} 倍。`, '這次沒有股價淨值比資料')
       + valRow('dy', v.dy, '%', v.own.dy, v.ind.dy, x => `用現在的價格買，照最近一次的股利算，一年大約拿回 ${f(x)}%。`, (d.div || []).length ? '這次沒有殖利率資料' : '這家公司近年沒有發放股利，所以沒有殖利率')
-      + `<p class="hint">位置條上的圓點是現在的數值，金色短線是${term('median')}。位置條只告訴你落在哪裡，高或低本身不代表好或壞。</p>`;
+      + `<p class="hint">位置條上的圓點是現在的數值，灰色短線是${term('median')}。位置條只告訴你落在哪裡，高或低本身不代表好或壞。</p>`;
 
   /* 5 獲利 */
   let profit;
@@ -789,7 +792,7 @@ async function renderStock(id){
       <button class="star" id="star" type="button">${watch.includes(id) ? '已加入自選' : '加入自選'}</button></div></section>
     ${card('s-warn', '有沒有警示', '下單之前最該先知道的事', srcTag('', d.market === '上市' ? '證交所' : '櫃買中心'), warnHtml)}
     ${card('s-sum', '一頁總結', '', '', `<ul class="summary-list">${sum.map(s => `<li>${s}</li>`).join('')}</ul><p class="hint">這幾句話是用固定規則從下面的數字整理出來的，只描述現況，沒有任何買賣建議。</p>`)}
-    ${card('s-today', '今日概況', '今天收在哪裡，和大盤比怎麼樣', day ? srcTag(day.date, d.market === '上市' ? '證交所' : '櫃買中心') : '', today)}
+    ${card('s-today', '今日概況', '今天收在哪裡，和大盤比怎麼樣', day ? srcTag(day.date, day.src || (d.market === '上市' ? '證交所' : '櫃買中心')) : '', today)}
     ${card('s-co', '公司在做什麼', '', srcTag('', d.market === '上市' ? '證交所' : '櫃買中心'), company)}
     ${card('s-trend', '股價走勢', '現在的價格在過去的什麼位置', lastH ? srcTag(lastH[0], FM) : '', trend)}
     ${card('s-val', '貴不貴', '和同業比、和它自己的過去比', srcTag(v.date, '證交所、櫃買中心、' + FM), value)}
