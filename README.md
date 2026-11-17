@@ -16,7 +16,7 @@ tw-stock/
 ## 資料怎麼來
 
 - 每日行情、估值、大盤、公司基本資料、交易警示：後端（Apps Script）每天 17 點和 20 點向證交所、櫃買中心抓，存在 Google 試算表。
-- 歷史股價、財報、股利：FinMind。FinMind 會擋 Google 的連線位址（後端去抓會拿到 403），所以這部分改由使用者自己的瀏覽器在打開個股頁時直接向 FinMind 要。
+- 歷史股價、財報、股利、三大法人、融資融券、外資持股、加權指數：FinMind。FinMind 會擋 Google 的連線位址（後端去抓會拿到 403），所以這部分改由使用者自己的瀏覽器在打開個股頁時直接向 FinMind 要。
 
 想看示範資料：把 `index.html` 裡的 `ENDPOINT` 改成空字串，會顯示三家虛構公司。
 
@@ -43,12 +43,13 @@ tw-stock/
 - 興櫃股票：沒收。
 - ETF：查得到，會顯示股價、走勢、配息，但成分股、費用、折溢價要等第二版。
 
-第二版的法人買賣、融資融券、技術指標、重大訊息、比較頁都還沒做。
+個股頁分成基本面、技術面、籌碼面三區，另外有漲跌原因、賺賠說明和買入試算。還沒做的：重大訊息、大戶持股比例（集保股權分散表要付費）、比較頁。
 
 ## 使用紀錄
 
-寫在試算表的 `events` 分頁，只記行為，不記個人資料。事件有 start、search、stock_view、term_open、expand、mode_switch、checklist_click、watchlist_add、fetch_error。
+寫在試算表的 `events` 分頁，只記行為，不記個人資料。事件有 start、search、stock_view、term_open、expand、mode_switch、checklist_click、watchlist_add、calc、fetch_error。
 
 ## 更新紀錄
 
 - 2026-11-17：第一版
+- 2026-11-17：個股頁分成基本面、技術面、籌碼面；加入技術指標、波動與可能的價格範圍、三大法人、融資融券、外資持股、漲跌線索、打平價與買入試算

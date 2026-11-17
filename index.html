@@ -83,6 +83,10 @@ details.more dt:first-child{margin-top:0}
 .pos-track{position:relative;height:6px;border-radius:3px;background:#e2e7ee;margin:9px 0 4px}
 .pos-med{position:absolute;top:-4px;width:2px;height:14px;background:#8a97a8;transform:translateX(-1px)}
 .pos-cur{position:absolute;top:-5px;width:16px;height:16px;border-radius:50%;background:var(--head);border:2px solid #fff;box-shadow:0 0 0 1px var(--head);transform:translateX(-8px)}
+.pos-ends.scale{position:relative;height:16px}
+.pos-ends.scale span{position:absolute;transform:translateX(-50%)}
+.pos-ends.scale span:first-child{left:0;transform:none}
+.pos-ends.scale span:last-child{right:0;transform:none}
 .pos-ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 
 /* 警示與總結 */
@@ -126,6 +130,30 @@ table.data th:first-child,table.data td:first-child{text-align:left}
 .dots{text-align:center;color:var(--muted);font-size:13px;margin-top:8px}
 .gl-cat{font-size:14px;color:var(--muted);margin:14px 0 6px}
 .gl-list{display:flex;flex-wrap:wrap;gap:8px}
+.jump{position:sticky;top:52px;z-index:18;background:var(--bg);display:flex;gap:6px;overflow-x:auto;padding:8px 0;margin:-4px 0 6px;scrollbar-width:none}
+.jump::-webkit-scrollbar{display:none}
+.jump button{flex:none;border:1px solid #c9d2de;background:#fff;border-radius:999px;padding:6px 13px;font-size:13.5px;min-height:36px}
+main section[id]{scroll-margin-top:112px}
+.group{margin:26px 0 12px}
+.group h2{font-size:19px;color:var(--head);line-height:1.35}
+.group>p{font-size:14.5px;color:var(--muted);margin:4px 0 10px}
+.todo{background:#eaf1fa;border:1px solid #c9d9ee;border-radius:8px;padding:10px 12px;font-size:14px}
+.todo strong{display:block;font-size:13px;color:var(--blue);margin-bottom:2px}
+.todo ul{padding-left:18px}
+.todo li{margin:3px 0}
+.sum3 dt{font-weight:700;font-size:13px;color:var(--blue);margin-top:8px}
+.sum3 dt:first-child{margin-top:0}
+.sum3 dd{font-size:15px}
+body.compact .sum3 dd{font-size:14px}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13.5px}
+.calc label{display:flex;flex-direction:column;gap:4px;color:var(--muted)}
+.calc input,.calc select{font:inherit;font-size:16px;color:var(--text);padding:9px 10px;border:1px solid #b9c4d2;border-radius:8px;background:#fff;min-height:44px;width:100%}
+.calc .btn{grid-column:1/-1;margin-top:2px}
+#cOut{margin-top:14px}
+.res table.data td:last-child{white-space:normal}
+.bars rect.bar.pos{fill:var(--up)}
+.bars rect.bar.neg{fill:var(--down)}
+td.up{color:var(--up)} td.down{color:var(--down)}
 footer{font-size:12px;color:var(--muted);padding:8px 0 28px;text-align:center}
 footer p{margin:4px 0}
 .loading{text-align:center;color:var(--muted);padding:40px 0}
@@ -238,9 +266,30 @@ const G = {
   attention: { t:'注意股', cat:'交易規則', def:'最近漲跌幅或成交量出現異常，被交易所點名提醒的股票。', eg:'一檔股票 6 天漲了 30% 以上，就可能被列為注意股。', myth:'被列為注意股，買賣方式不會改變，只是提醒你它最近波動很大。連續多次被注意就可能變成處置股。' },
   disposal: { t:'處置股', cat:'交易規則', def:'多次被列為注意股後，交易所用更嚴格的規則限制交易一段時間。', eg:'原本隨時都能成交，處置期間改成每 5 分鐘或 20 分鐘才撮合一次。', myth:'處置期間買賣很不方便，部分情況還要先把錢或股票準備好才能下單，想賣的時候不一定賣得掉。' },
   altered: { t:'變更交易', cat:'交易規則', def:'公司財務出狀況，例如淨值太低或財報出問題，被交易所改成更嚴格的交易方式，通常就是全額交割。', eg:'一般股票是成交後兩天才扣款，全額交割股要先把錢交給券商才能買。', myth:'這是財務方面的警訊，和注意股、處置股因為漲跌太大而被限制的情況不一樣。' },
-  halt: { t:'暫停交易', cat:'交易規則', def:'股票暫時不能買賣，常見原因是公司有重大訊息要公布，或沒有按時交出財報。', eg:'公司宣布要被併購之前，可能會先暫停交易一天。', myth:'暫停期間想賣也賣不掉，手上的錢會卡住。' }
+  halt: { t:'暫停交易', cat:'交易規則', def:'股票暫時不能買賣，常見原因是公司有重大訊息要公布，或沒有按時交出財報。', eg:'公司宣布要被併購之前，可能會先暫停交易一天。', myth:'暫停期間想賣也賣不掉，手上的錢會卡住。' },
+  fund: { t:'基本面', cat:'看盤基礎', def:'公司本身的狀況：做什麼生意、賺多少錢、財務穩不穩、發多少股利。', eg:'營收連續成長、毛利率維持穩定，是基本面常被拿來討論的事。', myth:'基本面好的公司，股價短期還是可能跌很多，因為短期價格受很多其他因素影響。' },
+  tech: { t:'技術面', cat:'看盤基礎', def:'只看股價和成交量本身的變化，例如走勢、均線和各種指標。', eg:'股價站上 20 日均線、RSI 衝上 70，都是技術面的描述。', myth:'技術面描述的是已經發生的價格，過去的走勢不保證會重演。' },
+  chip: { t:'籌碼面', cat:'看盤基礎', def:'看股票在誰手上、誰在買誰在賣，例如外資和投信的買賣、融資融券的變化。', eg:'外資連續十天賣超，是籌碼面常被注意的現象。', myth:'法人也會看錯。跟著法人買賣，不保證賺錢，而且資料公布時他們早就交易完了。' },
+  rsi: { t:'RSI', cat:'技術分析', def:'相對強弱指標。看最近 14 天裡，上漲的力道佔全部漲跌的多少，範圍 0 到 100。', eg:'14 天裡大部分是漲的，RSI 就會很高，例如 80。', myth:'很多人說超過 70 就會跌、低於 30 就會漲，但強勢的股票可以停在 70 以上很久。', calc:'最近 14 天的平均漲幅 ÷（平均漲幅＋平均跌幅）× 100' },
+  kd: { t:'KD 指標', cat:'技術分析', def:'看收盤價落在最近 9 天最高價和最低價之間的哪個位置。K 反應快、D 反應慢，範圍 0 到 100。', eg:'K 是 90，代表收盤價很靠近 9 天內的最高價。', myth:'K 往上穿過 D 叫黃金交叉，常被當成買進訊號，但在盤整時會反覆交叉，很多訊號都不準。', calc:'RSV＝（今天收盤－9 天最低）÷（9 天最高－9 天最低）× 100；K＝昨天的 K × 2/3＋RSV × 1/3；D＝昨天的 D × 2/3＋K × 1/3' },
+  macd: { t:'MACD', cat:'技術分析', def:'比較短期（12 天）和長期（26 天）的平均價格差多少，用來看漲跌的方向有沒有在轉變。', eg:'柱狀體由負轉正，代表短期價格開始比長期強。', myth:'MACD 反應比較慢，等它轉向的時候，價格常常已經走了一大段。', calc:'差離值＝12 日指數平均－26 日指數平均；訊號線＝差離值的 9 日指數平均；柱狀體＝差離值－訊號線' },
+  foreign: { t:'外資', cat:'籌碼', def:'外國的投資機構，例如國外的基金和銀行。台股的成交量裡有很大一部分來自外資。', eg:'外資買超 5,000 張，代表外資那天買的比賣的多 5,000 張。', myth:'外資不是一個人，裡面有很多家機構，有人買也有人賣，看到的只是加總後的結果。', how:'看連續幾天的方向，比看單一天有用。' },
+  trust: { t:'投信', cat:'籌碼', def:'國內發行基金和 ETF 的公司。', eg:'某檔 ETF 調整成分股的時候，投信會在同一天大買或大賣。', myth:'投信買超常被說成有人在作帳，但很多時候只是 ETF 有人申購或贖回。' },
+  dealer: { t:'自營商', cat:'籌碼', def:'證券公司用自己的錢買賣股票，分成自行買賣和避險兩種。', eg:'券商發行權證以後，要買股票來避險，這部分也算在自營商裡。', myth:'自營商的避險買賣通常和權證有關，不太能代表看好或看壞。' },
+  margin: { t:'融資', cat:'籌碼', def:'向券商借錢買股票。融資餘額是目前還沒還的總張數。', eg:'融資餘額增加 1,000 張，代表借錢買這檔的部位多了 1,000 張。', myth:'借錢買的股票如果跌太多，券商會要求補錢，補不出來就會被強制賣掉，所以融資多的股票下跌時賣壓可能更大。' },
+  short: { t:'融券', cat:'籌碼', def:'向券商借股票來賣，等價格跌了再買回來還，也就是放空。', eg:'用融券在 100 元賣出，跌到 90 元買回，每股賺 10 元。', myth:'放空的人最後一定要買回來，所以融券很多的股票如果上漲，放空的人急著買回，可能讓股價漲更多。' },
+  sratio: { t:'券資比', cat:'籌碼', def:'融券餘額除以融資餘額，看放空的人和借錢買的人比例。', eg:'融資 1 萬張、融券 2,000 張，券資比是 20%。', myth:'券資比高常被說成會軋空，但放空的人不一定會被迫回補。', calc:'融券餘額 ÷ 融資餘額 × 100%' },
+  fratio: { t:'外資持股比例', cat:'籌碼', def:'公司全部的股票裡，有百分之幾在外資手上。', eg:'外資持股 70%，代表每 100 股裡有 70 股是外資的。', myth:'比例高代表外資影響力大，外資大賣的時候股價也比較容易受影響。' },
+  volat: { t:'波動度', cat:'風險', def:'價格平常上下跳動的幅度，換算成一年，數字越大代表越不穩。', eg:'波動度 30%，大致表示一年內價格離現在 30% 左右的變化算常見。', myth:'波動大不等於會賠錢，只是賺和賠的幅度都可能比較大。', calc:'每天漲跌幅的標準差 × √250' },
+  mdd: { t:'最大跌幅', cat:'風險', def:'從過去某個最高點，跌到之後最低點的幅度，也就是買在最壞的時間點會經歷多大的帳面虧損。', eg:'最高 100 元、之後最低 60 元，最大跌幅是 40%。', myth:'過去最慘跌 40%，不代表未來最多只會跌 40%。', care:'本頁用的是沒有還原股利的價格，除息會讓跌幅看起來大一點。' },
+  beta: { t:'和大盤的連動', cat:'風險', def:'大盤漲跌 1% 的時候，這檔平均跟著漲跌幾 %。英文常寫成 Beta。', eg:'連動 1.5 倍，代表大盤跌 2% 的日子，它平均跌 3%。', myth:'這是平均值，個別的日子可能差很多。', calc:'用過去一年每天的漲跌幅，算這檔和大盤一起變動的程度' },
+  range: { t:'可能的價格範圍', cat:'風險', def:'用過去一年漲跌的幅度，推算一段時間後價格可能離現在多遠。', eg:'一個月後的九成範圍是 90 到 110 元，代表如果漲跌幅度和過去一樣，一個月後有九成機會落在這中間。', myth:'這不是預測漲跌，範圍上下兩邊的機會一樣。', calc:'假設每天漲跌幅的分布和過去一年一樣，以現在的價格為中心，九成範圍取上下 1.645 個標準差', care:'股市偶爾會出現比平常大很多的漲跌，實際落在範圍外的機會比算出來的多一點。' },
+  fee: { t:'手續費', cat:'交易成本', def:'付給券商的費用，買進和賣出各收一次，標準是成交金額的 0.1425%。', eg:'買 10 萬元的股票，手續費約 142 元，打 6 折約 85 元。', myth:'很多券商有最低收費，例如一筆至少 20 元，所以買很少的零股，手續費的比例會變高。' },
+  tax: { t:'證券交易稅', cat:'交易成本', def:'賣出時付給政府的稅。一般股票 0.3%，ETF 0.1%，債券 ETF 目前免徵到 2026 年底。', eg:'賣出 10 萬元的股票，證交稅 300 元。', myth:'證交稅只在賣出時收，買進不用。同一天買賣的當沖稅率是 0.15%。' },
+  breakeven: { t:'打平價', cat:'交易成本', def:'把買賣的手續費和證交稅都算進去以後，股價至少要漲到多少賣掉才不會賠。', eg:'100 元買進一般股票，大約要漲到 100.59 元賣出才打平。', myth:'這還沒算股利。有領到股利的話，打平價會比較低。', calc:'買進價 ×（1＋手續費率）÷（1－手續費率－證交稅率）' },
+  paper: { t:'帳面損益', cat:'交易成本', def:'還沒賣掉之前，用今天的價格算出來的賺賠。', eg:'100 元買、今天 90 元，帳面賠 10%，但只要還沒賣，明天的數字還會變。', myth:'帳面上賺很多，不代表真的賺到，賣掉以後才算數。' }
 };
-const CATS = ['看盤基礎', '估值', '財報', '股利', '技術分析', '交易規則'];
+const CATS = ['看盤基礎', '估值', '財報', '股利', '技術分析', '籌碼', '風險', '交易成本', '交易規則'];
 const term = (k, label) => `<button type="button" class="term" data-term="${k}">${label || G[k].t}</button>`;
 
 /* ============ 畫面元件 ============ */
@@ -273,7 +322,7 @@ function posBar(title, s, cur, unit){
     <div class="pos-ends"><span>${f(s.lo)}${unit}</span><span>中位數 ${f(s.med)}${unit}</span><span>${f(s.hi)}${unit}</span></div></div>`;
 }
 
-function barChart(items, fmt, label){
+function barChart(items, fmt, label, opts = {}){
   const data = items.filter(i => has(i.v));
   if(data.length < 2) return '';
   const W = 340, H = 150, top = 18, bot = 20;
@@ -286,7 +335,7 @@ function barChart(items, fmt, label){
   out += `<line x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>`;
   data.forEach((it, i) => {
     const x = i * step + (step - bw) / 2, y0 = y(Math.max(0, it.v)), h = Math.max(1, Math.abs(y(it.v) - y(0)));
-    out += `<rect class="bar" x="${x.toFixed(1)}" y="${y0.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>`;
+    out += `<rect class="bar${opts.sign ? (it.v >= 0 ? ' pos' : ' neg') : ''}" x="${x.toFixed(1)}" y="${y0.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>`;
     if(i === last || (i === iMax && Math.abs(i - last) > 2)){
       const tx = Math.min(W - 2, Math.max(2, x + bw / 2)), anchor = i === last ? 'end' : 'middle';
       out += `<text class="val" x="${i === last ? W - 1 : tx}" y="${(it.v >= 0 ? y0 - 5 : y0 + h + 11).toFixed(1)}" text-anchor="${anchor}">${fmt(it.v)}</text>`;
@@ -591,6 +640,277 @@ function ownWord(cur, s){
 }
 const pct = (a, b) => has(a) && has(b) && b !== 0 ? a / b * 100 : null;
 
+/* ============ 技術指標、風險與籌碼的計算 ============ */
+function ema(arr, n){ const k = 2 / (n + 1); let e = null; return arr.map(v => (e = e === null ? v : v * k + e * (1 - k))); }
+function rsi(closes, n = 14){
+  const out = new Array(closes.length).fill(null);
+  if(closes.length <= n) return out;
+  let g = 0, l = 0;
+  for(let i = 1; i <= n; i++){ const c = closes[i] - closes[i - 1]; if(c > 0) g += c; else l -= c; }
+  g /= n; l /= n;
+  out[n] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+  for(let i = n + 1; i < closes.length; i++){
+    const c = closes[i] - closes[i - 1];
+    g = (g * (n - 1) + Math.max(c, 0)) / n; l = (l * (n - 1) + Math.max(-c, 0)) / n;
+    out[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+  }
+  return out;
+}
+function kd(hist, n = 9){
+  let k = 50, d = 50;
+  return hist.map((h, i) => {
+    if(i < n - 1) return null;
+    const w = hist.slice(i - n + 1, i + 1), hi = Math.max(...w.map(x => x[2])), lo = Math.min(...w.map(x => x[3]));
+    const rsv = hi === lo ? 50 : (h[4] - lo) / (hi - lo) * 100;
+    k = k * 2 / 3 + rsv / 3; d = d * 2 / 3 + k / 3;
+    return [k, d];
+  });
+}
+function macd(closes){
+  const a = ema(closes, 12), b = ema(closes, 26), dif = closes.map((_, i) => a[i] - b[i]), sig = ema(dif, 9);
+  return dif.map((v, i) => [v, sig[i], v - sig[i]]);
+}
+function rsiStats(closes, r){
+  const ev = cond => {
+    let n = 0, up = 0, sum = 0;
+    for(let i = 1; i < closes.length - 20; i++){
+      if(has(r[i]) && has(r[i - 1]) && cond(r[i]) && !cond(r[i - 1])){ const c = closes[i + 20] / closes[i] - 1; n++; if(c > 0) up++; sum += c; }
+    }
+    return n >= 3 ? { n, up: up / n, avg: sum / n * 100 } : null;
+  };
+  return { hot: ev(v => v > 70), cold: ev(v => v < 30) };
+}
+function dailyRets(hist){ const r = []; for(let i = 1; i < hist.length; i++) r.push(Math.log(hist[i][4] / hist[i - 1][4])); return r; }
+function stdev(a){ const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / (a.length - 1)); }
+function maxDrawdown(hist){
+  let peak = -Infinity, pk = '', out = { mdd: 0 };
+  hist.forEach(h => {
+    if(h[4] > peak){ peak = h[4]; pk = h[0]; }
+    const dd = h[4] / peak - 1;
+    if(dd < out.mdd) out = { mdd: dd, peakDate: pk, peak, low: h[4], lowDate: h[0] };
+  });
+  return out;
+}
+function rangeModel(hist){
+  const all = dailyRets(hist), yr = all.slice(-250);
+  if(yr.length < 60) return null;
+  const s = stdev(yr), last = hist.at(-1)[4];
+  let hit = 0, tot = 0;
+  for(let t = 250; t + 20 <= all.length; t += 5){
+    const sd = stdev(all.slice(t - 250, t)), real = all.slice(t, t + 20).reduce((a, b) => a + b, 0);
+    tot++; if(Math.abs(real) <= 1.645 * sd * Math.sqrt(20)) hit++;
+  }
+  return { s, last, band: (h, z) => [last * Math.exp(-z * s * Math.sqrt(h)), last * Math.exp(z * s * Math.sqrt(h))], hitRate: tot >= 20 ? hit / tot : null, tot };
+}
+function futureDates(from, n){
+  const out = [], d = new Date(from + 'T00:00:00Z');
+  while(out.length < n){ d.setUTCDate(d.getUTCDate() + 1); const w = d.getUTCDay(); if(w !== 0 && w !== 6) out.push(d.toISOString().slice(0, 10)); }
+  return out;
+}
+function instByDate(rows){
+  const m = new Map();
+  (rows || []).forEach(r => {
+    const o = m.get(r.date) || { f: 0, t: 0, dl: 0 }, net = ((+r.buy || 0) - (+r.sell || 0)) / 1000;
+    if(/^Foreign/.test(r.name)) o.f += net; else if(r.name === 'Investment_Trust') o.t += net; else if(/^Dealer/.test(r.name)) o.dl += net;
+    m.set(r.date, o);
+  });
+  return m;
+}
+function dayMoves(hist, x){
+  const tmap = new Map(), tx = (x.taiex || []).filter(r => +r.close > 0);
+  tx.forEach((r, i) => { if(i) tmap.set(r.date, (r.close / tx[i - 1].close - 1) * 100); });
+  const im = instByDate(x.inst), out = [];
+  for(let i = 1; i < hist.length; i++){
+    out.push({ date: hist[i][0], pct: (hist[i][4] / hist[i - 1][4] - 1) * 100, vol: hist[i][5] / 1000,
+      mkt: tmap.has(hist[i][0]) ? tmap.get(hist[i][0]) : null, inst: im.get(hist[i][0]) || null });
+  }
+  return out;
+}
+function clue(mv, exSet){
+  if(exSet.has(mv.date)) return '那天是除息日，股價先扣掉了股利';
+  const parts = [];
+  if(has(mv.mkt)){
+    if(Math.abs(mv.mkt) >= 1.5 && mv.mkt * mv.pct > 0) parts.push(`大盤同一天也${mv.mkt > 0 ? '大漲' : '大跌'} ${f(Math.abs(mv.mkt), 1)}%`);
+    else if(Math.abs(mv.mkt) < .8) parts.push(`${Math.abs(mv.mkt) < .05 ? '大盤幾乎沒動' : `大盤只${upDown(mv.mkt)} ${Math.abs(mv.mkt).toFixed(1)}%`}，比較可能是公司或產業自己的消息`);
+    else parts.push(`大盤${upDown(mv.mkt)} ${Math.abs(mv.mkt).toFixed(1)}%`);
+  }
+  if(mv.inst && mv.vol > 0 && Math.abs(mv.inst.f) >= mv.vol * .15) parts.push(`外資${mv.inst.f > 0 ? '買超' : '賣超'} ${f(Math.abs(mv.inst.f), 0)} 張，是當天成交量的 ${f(Math.abs(mv.inst.f) / mv.vol * 100, 0)}%`);
+  return parts.join('；') || '大盤和法人都沒有明顯的線索';
+}
+function taxRate(d){
+  if(!d.isEtf) return .003;
+  return /B$/.test(d.id) && new Date().toISOString().slice(0, 10) <= '2026-12-31' ? 0 : .001;
+}
+function scaleBar(v, marks){
+  return `<div class="pos"><div class="pos-track">${marks.map(m => `<i class="pos-med" style="left:${m}%"></i>`).join('')}<b class="pos-cur" style="left:${Math.max(0, Math.min(100, v))}%"></b></div><div class="pos-ends scale"><span>0</span>${marks.map(m => `<span style="left:${m}%">${m}</span>`).join('')}<span>100</span></div></div>`;
+}
+function lineChart(o){
+  const W = 340, H = o.h || 170, L = 2, R = 50, T = 10, B = 20, n = o.x.length, vals = [];
+  const push = v => { if(has(v)) vals.push(v); };
+  o.series.forEach(s => s.v.forEach(push)); (o.bands || []).forEach(b => { b.lo.forEach(push); b.hi.forEach(push); }); (o.refs || []).forEach(r => push(r.v));
+  if(vals.length < 2) return '';
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if(hi === lo){ hi += 1; lo -= 1; }
+  const pad = (hi - lo) * .06; lo -= pad; hi += pad;
+  const X = i => L + (n <= 1 ? 0 : i / (n - 1)) * (W - L - R), Y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+  const path = arr => { let p = '', on = false; arr.forEach((v, i) => { if(!has(v)){ on = false; return; } p += (on ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); on = true; }); return p; };
+  const fmt = o.fmt || (v => f(v, 0));
+  let s = `<svg class="bars line" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label || '')}">`;
+  [lo + (hi - lo) * .1, (lo + hi) / 2, hi - (hi - lo) * .1].forEach(v => {
+    if((o.refs || []).some(r => r.label && Math.abs(Y(r.v) - Y(v)) < 13)){ s += `<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line)"/>`; return; }
+    s += `<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line)"/><text x="${W - R + 4}" y="${(Y(v) + 3).toFixed(1)}">${fmt(v)}</text>`;
+  });
+  (o.bands || []).forEach(b => {
+    const idx = b.lo.map((v, i) => has(v) ? i : -1).filter(i => i >= 0);
+    if(!idx.length) return;
+    const pts = idx.map(i => X(i).toFixed(1) + ',' + Y(b.hi[i]).toFixed(1)).concat(idx.slice().reverse().map(i => X(i).toFixed(1) + ',' + Y(b.lo[i]).toFixed(1)));
+    s += `<polygon points="${pts.join(' ')}" fill="${b.color}" fill-opacity="${b.op}"/>`;
+  });
+  if(has(o.vline)) s += `<line x1="${X(o.vline).toFixed(1)}" x2="${X(o.vline).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-dasharray="2 3"/>`;
+  (o.refs || []).forEach(r => {
+    s += `<line x1="${L}" x2="${W - R}" y1="${Y(r.v).toFixed(1)}" y2="${Y(r.v).toFixed(1)}" stroke="var(--muted)" stroke-dasharray="4 3"/>`;
+    if(r.label) s += `<rect x="${W - R + 1}" y="${(Y(r.v) - 8).toFixed(1)}" width="${R - 1}" height="15" fill="var(--card)"/><text class="val" x="${W - R + 4}" y="${(Y(r.v) + 3).toFixed(1)}">${esc(r.label)}</text>`;
+  });
+  o.series.forEach(se => { s += `<path d="${path(se.v)}" fill="none" stroke="${se.color}" stroke-width="${se.w || 2}" stroke-linejoin="round" stroke-linecap="round"/>`; });
+  const marks = o.xMarks || [[0, o.x[0]], [Math.floor((n - 1) / 2), o.x[Math.floor((n - 1) / 2)]], [n - 1, o.x[n - 1]]];
+  marks.forEach(([i, t], k) => { s += `<text x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="${k === 0 ? 'start' : k === marks.length - 1 ? 'end' : 'middle'}">${esc(t)}</text>`; });
+  if(o.tip){
+    const step = (W - L - R) / Math.max(1, n - 1);
+    for(let i = 0; i < n; i++){ const t = o.tip(i); if(t) s += `<rect class="hit" x="${(X(i) - step / 2).toFixed(1)}" y="0" width="${step.toFixed(1)}" height="${H}" data-tip="${esc(t)}"/>`; }
+  }
+  return s + '</svg>';
+}
+
+/* ---- 籌碼與大盤：由瀏覽器直接向 FinMind 要 ---- */
+async function fmGet(ds, id, start){
+  const r = await fetch(`${FM_URL}?dataset=${ds}&data_id=${encodeURIComponent(id)}&start_date=${start}`);
+  if(r.status === 402) throw new Error('這個小時的免費查詢次數用完了，晚一點再試');
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  return (await r.json()).data || [];
+}
+async function fetchExtras(d){
+  d.x = { src: {} };
+  const jobs = { inst: ['TaiwanStockInstitutionalInvestorsBuySell', d.id], margin: ['TaiwanStockMarginPurchaseShortSale', d.id], share: ['TaiwanStockShareholding', d.id], taiex: ['TaiwanStockPrice', 'TAIEX'] };
+  await Promise.all(Object.entries(jobs).map(async ([k, a]) => {
+    if(k === 'taiex' && mem.taiex){ d.x.taiex = mem.taiex; d.x.src.taiex = { ok: true }; return; }
+    try {
+      d.x[k] = await fmGet(a[0], a[1], yearsAgo(1));
+      d.x.src[k] = { ok: true };
+      if(k === 'taiex') mem.taiex = d.x[k];
+    } catch(e){
+      d.x[k] = [];
+      d.x.src[k] = { ok: false, msg: /fetch/i.test(e.message) ? '瀏覽器連不上 FinMind' : e.message };
+      track('fetch_error', k + ' ' + d.id);
+    }
+  }));
+}
+
+/* ---- 買入試算 ---- */
+async function runCalc(d){
+  const out = document.getElementById('cOut');
+  const date = document.getElementById('cDate').value, mode = document.getElementById('cMode').value;
+  const amt = +document.getElementById('cAmt').value, disc = +document.getElementById('cDisc').value;
+  if(!date || !(amt > 0)){ out.innerHTML = stateBox('請填買入日期，和大於 0 的金額或股數。'); return; }
+  out.innerHTML = '<p class="loading">計算中</p>';
+  track('calc', d.id);
+  let hist = d.hist;
+  if(date < hist[0][0] && !DEMO){
+    try {
+      const more = (await fmGet('TaiwanStockPrice', d.id, date)).filter(r => +r.close > 0).map(r => [r.date, +r.open, +r.max, +r.min, +r.close, +r.Trading_Volume]);
+      hist = more.filter(h => h[0] < hist[0][0]).concat(hist);
+    } catch(e){ out.innerHTML = stateBox(`更早的股價抓不到（${esc(e.message)}），請選 ${ymd(hist[0][0])} 之後的日期。`); return; }
+  }
+  const bi = hist.findIndex(h => h[0] >= date);
+  if(bi < 0){ out.innerHTML = stateBox(`最新的資料只到 ${ymd(hist.at(-1)[0])}，請選這天以前的日期。`); return; }
+  let events = [], divNote = '';
+  if(DEMO) events = (d.div || []).flatMap(y => (y.ex || []).map(e => ({ date: e[0], cash: e[1], stock: 0 })));
+  else {
+    try {
+      const key = 'divraw' + d.id;
+      const raw = mem[key] || (mem[key] = await fmGet('TaiwanStockDividend', d.id, '2000-01-01'));
+      events = raw.flatMap(r => {
+        const c = (+r.CashEarningsDistribution || 0) + (+r.CashStatutorySurplus || 0), s = (+r.StockEarningsDistribution || 0) + (+r.StockStatutorySurplus || 0), ev = [];
+        if(c && r.CashExDividendTradingDate) ev.push({ date: r.CashExDividendTradingDate, cash: c, stock: 0 });
+        if(s && r.StockExDividendTradingDate) ev.push({ date: r.StockExDividendTradingDate, cash: 0, stock: s });
+        return ev;
+      });
+    } catch(e){ divNote = `股利資料沒抓到（${esc(e.message)}），下面的結果沒有算股利。`; }
+  }
+  const buy = hist[bi], P = buy[4], feeR = .001425 * disc, taxR = taxRate(d);
+  const shares = mode === 'money' ? Math.floor(amt / (P * (1 + feeR))) : Math.floor(amt);
+  if(shares < 1){ out.innerHTML = stateBox(`${ymd(buy[0])} 的收盤價是 ${f(P)} 元，這個金額連 1 股都買不到。`); return; }
+  const minFee = n => n >= 1000 ? 20 : 1;
+  const cost = P * shares, fee1 = Math.max(minFee(shares), Math.floor(cost * feeR)), paid = cost + fee1;
+  const evs = events.filter(e => e.date > buy[0] && e.date <= hist.at(-1)[0]).sort((a, b) => a.date < b.date ? -1 : 1);
+  let sh = shares, cash = 0, cashN = 0, added = 0, ei = 0;
+  const ser = [];
+  for(let i = bi; i < hist.length; i++){
+    while(ei < evs.length && evs[ei].date <= hist[i][0]){
+      const e = evs[ei++];
+      if(e.cash){ cash += e.cash * sh; cashN++; }
+      if(e.stock){ const a = Math.floor(sh * e.stock / 10); sh += a; added += a; }
+    }
+    ser.push([hist[i][0], sh * hist[i][4] + cash]);
+  }
+  const last = hist.at(-1), value = sh * last[4];
+  const fee2 = Math.max(minFee(sh), Math.floor(value * feeR)), tax = Math.floor(value * taxR);
+  const net = value - fee2 - tax + cash - paid, netP = net / paid * 100;
+  const days = (new Date(last[0]) - new Date(buy[0])) / 864e5;
+  const ann = days >= 365 ? (Math.pow(1 + net / paid, 365 / days) - 1) * 100 : null;
+  let lo = { v: Infinity }, hi = { v: -Infinity };
+  ser.slice(1).forEach(([dt, v]) => { const pl = v - paid; if(pl < lo.v) lo = { v: pl, dt }; if(pl > hi.v) hi = { v: pl, dt }; });
+  const lots = Math.floor(shares / 1000), odd = shares % 1000;
+  out.innerHTML = `<div class="res">
+      <p class="big ${cls(net)}" style="font-size:28px">${net >= 0 ? '賺' : '賠'} ${f(Math.abs(Math.round(net)), 0)} 元</p>
+      <p class="plain">報酬率 ${signed(netP, 1)}%${has(ann) ? `，換算成一年大約 ${signed(ann, 1)}%` : ''}（${f(days, 0)} 天）。這是假設今天用收盤價全部賣掉，扣掉手續費和稅之後的結果。</p>
+      ${divNote ? stateBox(divNote) : ''}
+      <div class="scroll"><table class="data">
+        <tr><td>${ymd(buy[0])} 收盤價</td><td>${f(P)} 元</td></tr>
+        <tr><td>買到</td><td>${f(shares, 0)} 股${lots ? `（${lots} 張${odd ? '又 ' + odd + ' 股' : ''}）` : '（零股）'}</td></tr>
+        <tr><td>買進金額＋手續費</td><td>${f(cost, 0)}＋${f(fee1, 0)} 元</td></tr>
+        <tr><td>期間領到的現金股利</td><td>${cashN ? `${cashN} 次，共 ${f(Math.round(cash), 0)} 元` : '沒有'}</td></tr>
+        ${added ? `<tr><td>配到的股票股利</td><td>多了 ${f(added, 0)} 股</td></tr>` : ''}
+        <tr><td>${ymd(last[0])} 收盤價</td><td>${f(last[4])} 元</td></tr>
+        <tr><td>現在的市值</td><td>${f(Math.round(value), 0)} 元（${f(sh, 0)} 股）</td></tr>
+        <tr><td>今天賣掉要付的手續費＋證交稅</td><td>${f(fee2, 0)}＋${f(tax, 0)} 元</td></tr>
+      </table></div>
+      <p class="plain">拆開來看：價差 ${signed(Math.round(value - cost), 0)} 元，股利 ${signed(Math.round(cash), 0)} 元，手續費和稅 −${f(fee1 + fee2 + tax, 0)} 元。</p>
+      ${lineChart({ x: ser.map(s => s[0]), h: 160, label: '持有期間的價值', series: [{ v: ser.map(s => s[1]), color: 'var(--blue)' }], refs: [{ v: paid, label: '成本' }],
+          fmt: v => f(v / 1e4, v >= 1e6 ? 0 : 1) + '萬', xMarks: [[0, ymd(ser[0][0])], [ser.length - 1, ymd(ser.at(-1)[0])]],
+          tip: i => `${ymd(ser[i][0])}：價值 ${f(Math.round(ser[i][1]), 0)} 元，帳面${ser[i][1] >= paid ? '賺' : '賠'} ${f(Math.abs(Math.round(ser[i][1] - paid)), 0)} 元` })}
+      <p class="hint">藍線是「股票市值＋已經領到的股利」，在虛線上面就是帳面賺錢，在下面就是帳面賠錢。</p>
+      <p class="plain">${ser.length < 2 ? '' : `持有這段時間，帳面最多曾經`}${ser.length < 2 ? '' : lo.v < 0 ? `賠 ${f(Math.abs(Math.round(lo.v)), 0)} 元（${ymd(lo.dt)}）` : '沒有賠過'}${ser.length < 2 ? '' : '，最多曾經'}${ser.length < 2 ? '' : hi.v > 0 ? `賺 ${f(Math.round(hi.v), 0)} 元（${ymd(hi.dt)}）` : '沒有賺過'}${ser.length < 2 ? '今天買的話還沒有變化。' : '。'}</p>
+      <p class="hint">怎麼算的：用收盤價買進和賣出；手續費依你選的折扣，整張最低 20 元、零股最低 1 元，各家券商不同；股利在除息日計入，實際入帳會晚幾週；沒有扣股利的所得稅和二代健保補充保費。</p>
+    </div>`;
+}
+function bindCalc(d){
+  const go = document.getElementById('cGo');
+  if(!go) return;
+  go.onclick = () => runCalc(d);
+  const mode = document.getElementById('cMode'), lab = document.getElementById('cAmtLabel');
+  mode.onchange = () => { lab.firstChild.textContent = mode.value === 'money' ? '金額（元）' : '股數'; document.getElementById('cAmt').value = mode.value === 'money' ? 100000 : 1000; };
+  runCalc(d);
+}
+
+/* ---- 示範資料的籌碼與大盤 ---- */
+function demoExtras(d, seed){
+  const r = rng(seed + 7), last = d.hist.slice(-250), inst = [];
+  last.forEach(h => {
+    [['Foreign_Investor', .25], ['Investment_Trust', .06], ['Dealer_self', .03], ['Dealer_Hedging', .03]].forEach(([name, w]) => {
+      inst.push({ date: h[0], name, buy: Math.round(h[5] * w * (.6 + r() * .8)), sell: Math.round(h[5] * w * (.6 + r() * .8)) });
+    });
+  });
+  let bal = Math.round(d.co.shares / 1000 * .002 + 500), sb = Math.round(bal * .05), fr = 30 + r() * 40, t = 27000;
+  const r2 = rng(99);
+  return {
+    inst,
+    margin: last.map(h => { bal = Math.max(10, Math.round(bal * (1 + (r() - .5) * .04))); sb = Math.max(0, Math.round(sb * (1 + (r() - .5) * .1))); return { date: h[0], MarginPurchaseTodayBalance: bal, MarginPurchaseLimit: Math.round(d.co.shares / 1000 * .25), ShortSaleTodayBalance: sb }; }),
+    share: last.map(h => { fr = Math.min(95, Math.max(1, fr + (r() - .5) * .3)); return { date: h[0], ForeignInvestmentSharesRatio: Math.round(fr * 100) / 100 }; }),
+    taiex: last.map(h => { t *= 1 + (r2() - .48) * .02; return { date: h[0], close: Math.round(t * 100) / 100 }; }),
+    src: { inst: { ok: true }, margin: { ok: true }, share: { ok: true }, taiex: { ok: true } }
+  };
+}
+
 /* ============ 個股頁 ============ */
 let chart = null;
 async function renderStock(id){
@@ -598,7 +918,8 @@ async function renderStock(id){
   app.innerHTML = '<p class="loading">正在整理這檔股票的資料，第一次查會久一點</p>';
   let d;
   try { d = await api('stock', { id }); } catch { d = null; }
-  if(!DEMO && d && d.ok) await fillFromBrowser(d);
+  if(!DEMO && d && d.ok) await Promise.all([fillFromBrowser(d), fetchExtras(d)]);
+  if(DEMO && d && d.ok && !d.x) d.x = demoExtras(d, (DEMOS[d.id] || {}).seed || 1);
   if(location.hash !== '#/s/' + id) return;
   if(!d || !d.ok){
     if(!d || d.error !== 'notfound') track('fetch_error', 'stock ' + id);
@@ -638,17 +959,6 @@ async function renderStock(id){
   let warnHtml = (d.warn || []).map(w => `<div class="alert"><strong>${term(warnExplain[w.type] || 'attention', esc(w.type))}${w.date ? '（' + ymd(w.date) + '）' : ''}</strong>${warnPlain[w.type] || ''}${w.text ? `<small>${esc(w.text)}</small>` : ''}</div>`).join('');
   if(!d.warnOk) warnHtml += stateBox('警示資料這次沒有完整抓到' + (d.warnMsg ? '（' + esc(d.warnMsg) + '）' : '') + '，下單前請到券商 App 再確認一次。');
   else if(!(d.warn || []).length) warnHtml += `<p class="ok-line">目前沒有${term('attention')}、${term('disposal')}、${term('altered')}或${term('halt')}的紀錄。</p>`;
-
-  /* 一頁總結（規則套版，不是 AI 生成） */
-  const sum = [];
-  sum.push(`${esc(d.name)}是${esc(d.market)}的${d.isEtf ? ' ETF' : esc(d.industry || '') + '公司'}。`);
-  if(!d.isEtf && last4.length === 4) sum.push(lossQ === 0 ? '最近四季都有賺錢。' : lossQ === 4 ? '最近四季都是虧損。' : `最近四季裡有 ${lossQ} 季虧損。`);
-  if(has(ret1y)) sum.push(`股價和一年前相比${upDown(ret1y)}了 ${f(Math.abs(ret1y), 1)}%。`);
-  else if(short) sum.push(`掛牌還不到一年，只有大約 ${months} 個月的股價資料。`);
-  if(has(d.val.pe) && d.val.ind.pe) sum.push(`本益比 ${f(d.val.pe, 1)} 倍，${relWord(d.val.pe, d.val.ind.pe.med) === '差不多' ? '和' : '比'}同產業中位數 ${f(d.val.ind.pe.med, 1)} 倍${relWord(d.val.pe, d.val.ind.pe.med)}。`);
-  else if(!d.isEtf && has(ttmEps) && ttmEps <= 0) sum.push('因為最近四季合計是虧損，算不出本益比。');
-  const real = (d.warn || []).filter(w => w.type !== '即將除權息');
-  sum.push(real.length ? `目前有交易警示：${real.map(w => esc(w.type)).join('、')}。` : d.warnOk ? '目前沒有交易警示。' : '交易警示這次沒抓到，請另外確認。');
 
   /* 1 今日概況 */
   let today = stateBox('今天的行情還沒抓到。');
@@ -786,22 +1096,231 @@ async function renderStock(id){
         ${dv.slice().reverse().map(x => `<tr><td>${x.y}</td><td>${f(x.cash, 2)}</td><td>${f(x.stock, 2)}</td><td>${(x.ex || []).map(e => md(e[0])).join('、') || '無'}</td></tr>`).join('')}</table></div></details>`;
   }
 
+  /* ===== 技術面 ===== */
+  const x = d.x || { src: {} };
+  const closes = hist.map(h => h[4]);
+  const exSet = new Set(dv.flatMap(y => (y.ex || []).map(e => e[0])));
+  const noPrice = stateBox('歷史股價這次沒抓到，算不出來。');
+  const enough = hist.length > 40;
+  let indic = enough ? '' : noPrice, risk = enough ? '' : noPrice, range = enough ? '' : noPrice;
+  const R = enough ? rsi(closes) : null, rNow = R ? R.at(-1) : null;
+  const ma20 = hist.length >= 20 ? hist.slice(-20).reduce((a, b) => a + b[4], 0) / 20 : null;
+  if(enough && has(rNow)){
+    const st = rsiStats(closes, R), K = kd(hist), kNow = K.at(-1), kPrev = K.at(-2), M = macd(closes), mNow = M.at(-1), mPrev = M.at(-2);
+    const yrs = Math.max(1, Math.round(hist.length / 250));
+    const ev = (e, word) => e ? `過去 ${yrs} 年裡 RSI ${word}共 ${e.n} 次，之後 20 個交易日股價上漲的有 ${Math.round(e.up * 100)}%，平均${upDown(e.avg)} ${f(Math.abs(e.avg), 1)}%。` : '';
+    const extreme = rNow >= 70 || rNow <= 30;
+    indic = row({ k:'rsi', label:'RSI（14 日）', value: f(rNow, 0), bar: scaleBar(rNow, [30, 70]),
+        plain: (rNow >= 70 ? '最近漲得很急，常被叫做過熱。' : rNow <= 30 ? '最近跌得很急，常被叫做超賣。' : '最近漲跌的力道沒有特別偏向哪一邊。')
+          + (rNow >= 70 ? ev(st.hot, '衝上 70 ') : rNow <= 30 ? ev(st.cold, '跌破 30 ') : '')
+          + (extreme ? '所以這個數字不能單獨拿來猜接下來會漲還是會跌。' : '') })
+      + row({ k:'kd', label:'KD（9 日）', value: `${f(kNow[0], 0)} / ${f(kNow[1], 0)}`, unit:'K / D', bar: scaleBar(kNow[0], [20, 80]),
+        plain: (kNow[0] >= 80 ? '收盤價靠近最近 9 天的最高價。' : kNow[0] <= 20 ? '收盤價靠近最近 9 天的最低價。' : '收盤價在最近 9 天的高低之間。')
+          + (kPrev && (kPrev[0] - kPrev[1]) * (kNow[0] - kNow[1]) < 0
+            ? `今天 K 線${kNow[0] > kNow[1] ? '往上穿過' : '往下穿過'} D 線，這叫${kNow[0] > kNow[1] ? '黃金交叉' : '死亡交叉'}。`
+            : `K 在 D 的${kNow[0] >= kNow[1] ? '上面，最近幾天的價格比稍早強' : '下面，最近幾天的價格比稍早弱'}。`) })
+      + row({ k:'macd', label:'MACD 柱狀體', value: signed(mNow[2], 2),
+        plain: `短期平均價${mNow[0] >= 0 ? '高於' : '低於'}長期平均價。`
+          + (mPrev && mPrev[2] * mNow[2] < 0 ? `柱狀體今天由${mNow[2] > 0 ? '負轉正，短期的方向剛轉強' : '正轉負，短期的方向剛轉弱'}。` : `柱狀體${mNow[2] >= 0 ? '是正的' : '是負的'}，比昨天${Math.abs(mNow[2]) > Math.abs(mPrev[2]) ? '變大' : '變小'}。`) })
+      + `<p class="hint">這三個指標都是從過去的股價算出來的，只描述最近漲跌的力道和位置。</p>`;
+  }
+  let beta = null, corr = null;
+  const yrRets = dailyRets(hist).slice(-250);
+  if(enough && yrRets.length >= 60){
+    const vol = stdev(yrRets) * Math.sqrt(250) * 100, big3 = yrRets.filter(r => Math.abs(r) >= Math.log(1.03)).length, dd = maxDrawdown(hist);
+    const tx = (x.taiex || []).filter(r => +r.close > 0), tmap = new Map();
+    tx.forEach((r, i) => { if(i) tmap.set(r.date, r.close / tx[i - 1].close - 1); });
+    const pairs = [];
+    for(let i = Math.max(1, hist.length - 250); i < hist.length; i++){ const m = tmap.get(hist[i][0]); if(has(m)) pairs.push([hist[i][4] / hist[i - 1][4] - 1, m]); }
+    if(pairs.length >= 60){
+      const ms = pairs.reduce((a, p) => a + p[0], 0) / pairs.length, mm = pairs.reduce((a, p) => a + p[1], 0) / pairs.length;
+      let cv = 0, vm = 0, vs = 0;
+      pairs.forEach(p => { cv += (p[0] - ms) * (p[1] - mm); vm += (p[1] - mm) ** 2; vs += (p[0] - ms) ** 2; });
+      beta = cv / vm; corr = cv / Math.sqrt(vm * vs);
+    }
+    risk = row({ k:'volat', label:'一年的波動度', value: f(vol, 0), unit:'%',
+        plain: `過去一年有 ${big3} 天單日漲跌超過 3%。${vol >= 45 ? '波動很大，價格常常一天就差很多。' : vol >= 25 ? '波動屬於中等。' : '波動相對小。'}` })
+      + (dd.lowDate ? row({ k:'mdd', label:`最大跌幅（${short ? '掛牌以來' : '近 ' + Math.max(1, Math.round(hist.length / 250)) + ' 年'}）`, value: f(dd.mdd * 100, 1), unit:'%', cls:'down',
+          plain: `如果買在 ${ymd(dd.peakDate)} 的 ${f(dd.peak)} 元，最慘曾經跌到 ${ymd(dd.lowDate)} 的 ${f(dd.low)} 元，帳面賠了 ${f(Math.abs(dd.mdd * 100), 1)}%。${Math.abs(dd.mdd) >= .3 ? '跌超過 30% 的情況真的發生過。' : ''}` }) : '')
+      + (has(beta) ? row({ k:'beta', value: f(beta, 2), unit:'倍',
+          plain: `過去一年，大盤漲跌 1% 的日子，這檔平均${beta >= 0 ? '同方向' : '反方向'}動 ${f(Math.abs(beta), 2)}%。${Math.abs(corr) < .4 ? '不過兩者的關係不算緊密，這檔常常走自己的路。' : beta > 1.2 ? '比大盤更敏感，大盤跌的時候它通常跌更多。' : beta < .8 ? '比大盤溫和一點。' : '和大盤差不多。'}` })
+        : row({ k:'beta', na: x.src.taiex && x.src.taiex.ok ? '資料不到 60 天，算不出來' : '大盤資料這次沒抓到' }));
+    const rm = rangeModel(hist);
+    if(rm){
+      const past = hist.slice(-120), fut = futureDates(past.at(-1)[0], 60), n0 = past.length, xs = past.map(h => h[0]).concat(fut);
+      const b90 = xs.map((_, i) => i < n0 - 1 ? [null, null] : rm.band(i - n0 + 1, 1.645)), b50 = xs.map((_, i) => i < n0 - 1 ? [null, null] : rm.band(i - n0 + 1, .674));
+      const actual = past.map(h => h[4]).concat(fut.map(() => null));
+      const m1 = rm.band(20, 1.645), m3 = rm.band(60, 1.645), q1 = rm.band(20, .674);
+      range = lineChart({ x: xs, h: 190, label: '接下來 3 個月可能的價格範圍',
+          series: [{ v: actual, color: 'var(--blue)' }],
+          bands: [{ lo: b90.map(b => b[0]), hi: b90.map(b => b[1]), color: 'var(--blue)', op: .1 }, { lo: b50.map(b => b[0]), hi: b50.map(b => b[1]), color: 'var(--blue)', op: .18 }],
+          refs: [{ v: rm.last, label: '現價' }], vline: n0 - 1, xMarks: [[0, md(xs[0])], [n0 - 1, '今天'], [xs.length - 1, md(xs.at(-1))]],
+          tip: i => i < n0 ? `${ymd(xs[i])} 收 ${f(actual[i])}` : `${ymd(xs[i])}：九成範圍 ${f(b90[i][0], 0)} 到 ${f(b90[i][1], 0)}` })
+        + `<p class="hint">左邊是過去半年的收盤價。右邊深色帶是一半機會的範圍，淺色帶是九成機會的範圍。虛線是現在的價格，不代表會持平。</p>`
+        + row({ k:'range', label:'1 個月後的九成範圍', value: `${f(m1[0], 0)} 到 ${f(m1[1], 0)}`, unit:'元',
+            plain: `如果接下來的漲跌幅度和過去一年差不多，一個月後有九成機會落在這裡，也就是 ${signed((m1[0] / rm.last - 1) * 100, 0)}% 到 ${signed((m1[1] / rm.last - 1) * 100, 0)}%。一半機會落在 ${f(q1[0], 0)} 到 ${f(q1[1], 0)} 元。` })
+        + row({ label:'3 個月後的九成範圍', value: `${f(m3[0], 0)} 到 ${f(m3[1], 0)}`, unit:'元', plain:'時間拉越長，範圍越寬。' })
+        + (has(rm.hitRate) ? `<p class="plain">用這檔過去的資料檢查這個算法：一個月後的價格真的落在九成範圍內的比例是 ${Math.round(rm.hitRate * 100)}%（檢查了 ${rm.tot} 次）。${rm.hitRate < .85 ? '比九成少，代表這檔常出現比平常更大的漲跌，實際的風險比圖上看起來大。' : ''}</p>` : '')
+        + stateBox('這張圖不會告訴你會漲還是會跌。它只用過去一年漲跌的幅度，推算價格可能離現在多遠，上下兩邊的機會一樣。遇到大盤一天大跌好幾 % 的情況，實際變化可能超出範圍。');
+    }
+  }
+
+  /* ===== 籌碼面 ===== */
+  const im = instByDate(x.inst), idays = [...im.keys()].sort(), l20 = idays.slice(-20);
+  const avgVol = hist.length >= 20 ? hist.slice(-20).reduce((a, h) => a + h[5], 0) / 20 / 1000 : null;
+  const miss = (k, name) => stateBox(`${name}這次沒抓到${x.src[k] && x.src[k].msg ? '（' + esc(x.src[k].msg) + '）' : ''}。`);
+  let instHtml, f20 = null;
+  if(!x.src.inst || !x.src.inst.ok) instHtml = miss('inst', '三大法人的資料');
+  else if(!l20.length) instHtml = stateBox('這檔最近沒有三大法人的買賣紀錄。');
+  else {
+    const s20 = k => l20.reduce((a, dt) => a + im.get(dt)[k], 0);
+    const streak = k => { const sg = Math.sign(im.get(idays.at(-1))[k]); let n = 0; if(sg) for(let i = idays.length - 1; i >= 0 && Math.sign(im.get(idays[i])[k]) === sg; i--) n++; return { n, sg }; };
+    f20 = s20('f');
+    const who = (k, key, name) => { const v = s20(k), st = streak(k);
+      return row({ k: key, label: `${name}（近 ${l20.length} 個交易日）`, value: signed(Math.round(v), 0), unit:'張', cls: cls(v),
+        plain: `累計${v >= 0 ? '買超' : '賣超'} ${f(Math.abs(v), 0)} 張${avgVol ? `，大約是 ${f(Math.abs(v) / avgVol, 1)} 天的平均成交量` : ''}。${st.n >= 3 ? (st.sg === Math.sign(v) ? `已經連續 ${st.n} 天${st.sg > 0 ? '買超' : '賣超'}。` : `不過最近 ${st.n} 天轉成連續${st.sg > 0 ? '買超' : '賣超'}。`) : ''}`,
+        extra: k === 'f' ? barChart(l20.map(dt => ({ l: md(dt), v: im.get(dt).f })), v => signed(Math.round(v), 0) + ' 張', '外資每日買賣超', { sign: true }) : '' }); };
+    instHtml = who('f', 'foreign', '外資') + who('t', 'trust', '投信') + who('dl', 'dealer', '自營商')
+      + `<details class="more"><summary>最近 10 天明細</summary><div class="scroll"><table class="data"><tr><th>日期</th><th>外資</th><th>投信</th><th>自營商</th><th>合計</th></tr>`
+      + idays.slice(-10).reverse().map(dt => { const o = im.get(dt); return `<tr><td>${md(dt)}</td>${[o.f, o.t, o.dl, o.f + o.t + o.dl].map(v => `<td class="${cls(v)}">${signed(Math.round(v), 0)}</td>`).join('')}</tr>`; }).join('')
+      + `</table></div><p class="hint">單位是張。紅色是買超，綠色是賣超。</p></details>`;
+  }
+  const mg = (x.margin || []).filter(r => has(+r.MarginPurchaseTodayBalance)).sort((a, b) => a.date < b.date ? -1 : 1);
+  let marginHtml, mChg = null;
+  if(!x.src.margin || !x.src.margin.ok) marginHtml = miss('margin', '融資融券');
+  else if(!mg.length || !(+mg.at(-1).MarginPurchaseTodayBalance || +mg.at(-1).ShortSaleTodayBalance)) marginHtml = stateBox('這檔沒有融資融券的紀錄。部分股票和 ETF 不能用融資融券交易。');
+  else {
+    const lm = mg.at(-1), pm = mg.at(-21) || mg[0], bal = +lm.MarginPurchaseTodayBalance, bal0 = +pm.MarginPurchaseTodayBalance, sb = +lm.ShortSaleTodayBalance, lim = +lm.MarginPurchaseLimit;
+    mChg = bal - bal0;
+    const ph = hist.find(h => h[0] >= pm.date), pr = ph ? (hist.at(-1)[4] / ph[4] - 1) * 100 : null;
+    const tail = mg.slice(-120);
+    marginHtml = row({ k:'margin', label:'融資餘額', value: f(bal, 0), unit:'張',
+        plain: `和 ${md(pm.date)} 相比${mChg >= 0 ? '增加' : '減少'} ${f(Math.abs(mChg), 0)} 張${bal0 ? `（${signed(mChg / bal0 * 100, 1)}%）` : ''}，借錢買這檔的人變${mChg >= 0 ? '多' : '少'}了。`
+          + (mChg > 0 && has(pr) && pr < 0 ? '同一段時間股價是跌的，借錢買的人帳面上多半在賠。' : '') + (lim ? `目前用掉融資額度的 ${f(bal / lim * 100, 1)}%。` : ''),
+        extra: lineChart({ x: tail.map(r => r.date), h: 120, label: '融資餘額', series: [{ v: tail.map(r => +r.MarginPurchaseTodayBalance), color: 'var(--blue)' }],
+          xMarks: [[0, md(tail[0].date)], [tail.length - 1, md(tail.at(-1).date)]], tip: i => `${ymd(tail[i].date)} 融資餘額 ${f(+tail[i].MarginPurchaseTodayBalance, 0)} 張` }) })
+      + row({ k:'short', label:'融券餘額', value: f(sb, 0), unit:'張' })
+      + row({ k:'sratio', value: bal ? f(sb / bal * 100, 1) : '沒有資料', unit: bal ? '%' : '',
+          plain: bal ? `放空的張數是融資的 ${f(sb / bal * 100, 1)}%。${sb / bal > .3 ? '這個比例偏高，放空的人不少。' : ''}` : '' });
+  }
+  const shr = (x.share || []).filter(r => has(+r.ForeignInvestmentSharesRatio)).sort((a, b) => a.date < b.date ? -1 : 1);
+  let foreignHtml, frNow = null;
+  if(!x.src.share || !x.src.share.ok) foreignHtml = miss('share', '外資持股比例');
+  else if(!shr.length) foreignHtml = stateBox('這檔沒有外資持股的資料。');
+  else {
+    frNow = +shr.at(-1).ForeignInvestmentSharesRatio;
+    const p60 = shr.at(-61) || shr[0], ch = frNow - +p60.ForeignInvestmentSharesRatio;
+    foreignHtml = row({ k:'fratio', value: f(frNow, 2), unit:'%',
+        plain: `每 100 股裡有 ${f(frNow, 1)} 股在外資手上。和 ${md(p60.date)} 相比${Math.abs(ch) < .05 ? '幾乎沒變' : `${ch > 0 ? '增加' : '減少'} ${f(Math.abs(ch), 2)} 個百分點`}。`,
+        extra: lineChart({ x: shr.map(r => r.date), h: 120, label: '外資持股比例', series: [{ v: shr.map(r => +r.ForeignInvestmentSharesRatio), color: 'var(--blue)' }], fmt: v => f(v, 1) + '%',
+          xMarks: [[0, ymd(shr[0].date)], [shr.length - 1, ymd(shr.at(-1).date)]], tip: i => `${ymd(shr[i].date)} 外資持股 ${f(+shr[i].ForeignInvestmentSharesRatio, 2)}%` }) });
+  }
+  foreignHtml += stateBox(`大戶和散戶各持有多少（集保股權分散表）需要付費資料，這版沒有。可以到<a href="https://www.tdcc.com.tw/portal/zh/smWeb/qryStock" target="_blank" rel="noopener">集保結算所網站</a>免費查詢。`);
+
+  /* ===== 為什麼漲、為什麼跌 ===== */
+  const moves = hist.length > 2 ? dayMoves(hist.slice(-251), x) : [];
+  const lastMv = moves.at(-1);
+  if(lastMv && day && lastMv.date === day.date){
+    const exp = has(beta) && has(lastMv.mkt) ? `照過去一年的連動程度，大盤${upDown(lastMv.mkt)} ${f(Math.abs(lastMv.mkt), 1)}% 的日子，這檔平均會${beta * lastMv.mkt >= 0 ? '漲' : '跌'} ${f(Math.abs(beta * lastMv.mkt), 1)}%，今天實際${upDown(lastMv.pct)} ${f(Math.abs(lastMv.pct), 1)}%。` : '';
+    today += row({ label:'今天漲跌的線索', value: '', plain: clue(lastMv, exSet) + '。' + exp + `<a href="#" data-goto="s-why">更多說明</a>` });
+  }
+  const top = moves.slice().sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct)).slice(0, 6).sort((a, b) => a.date < b.date ? 1 : -1);
+  const why = `<p class="plain">股價是想買的人和想賣的人談出來的。長期來看，股價大致跟著公司能賺多少錢走，這是${term('fund', '基本面')}；短期則常被大盤、消息、資金和情緒推著走，${term('tech', '技術面')}和${term('chip', '籌碼面')}看的就是這些。</p>
+      <p class="plain" style="margin-top:8px"><b>常見的漲跌原因</b></p>
+      <ul class="summary-list"><li>大盤一起漲或一起跌，例如國際股市大跌、利率或匯率變動。</li><li>公司自己的消息：月營收、財報、法說會、重大訊息。</li><li>法人大買或大賣，例如外資連續賣超。</li><li>除權息：股價先扣掉股利，看起來像大跌。</li><li>產業消息：例如同業接到大訂單，或某項產品被禁止出口。</li></ul>`
+    + (top.length ? `<p class="plain" style="margin-top:10px"><b>過去一年漲跌最大的 ${top.length} 天</b></p><div class="scroll"><table class="data"><tr><th>日期</th><th>這檔</th><th>大盤</th><th>線索</th></tr>`
+      + top.map(m => `<tr><td>${ymd(m.date)}</td><td class="${cls(m.pct)}">${(m.pct > 0 ? '+' : '') + m.pct.toFixed(1)}%</td><td class="${Math.abs(m.mkt) < .05 ? '' : cls(m.mkt)}">${has(m.mkt) ? (Math.abs(m.mkt) < .05 ? '0.0%' : (m.mkt > 0 ? '+' : '') + m.mkt.toFixed(1) + '%') : '無'}</td><td style="white-space:normal;text-align:left">${esc(clue(m, exSet))}</td></tr>`).join('')
+      + `</table></div><p class="hint">表裡的線索只是同一天發生的事，不一定是原因。想知道公司那天發生什麼，可以到<a href="https://mops.twse.com.tw/" target="_blank" rel="noopener">公開資訊觀測站</a>查那天的重大訊息。外資資料只有近一年。</p>` : '');
+
+  /* ===== 怎樣賺錢、怎樣賠錢 ===== */
+  const taxR = taxRate(d), P0 = day ? day.close : null, feeStd = .001425;
+  const be = P0 ? P0 * (1 + feeStd) / (1 - feeStd - taxR) : null;
+  const money = `<p class="plain">買股票的賺賠只有兩個來源：<b>價差</b>（賣出價減掉買進價）和<b>股利</b>。中間要付兩種成本：</p>`
+    + row({ k:'fee', label:'手續費（買、賣各一次）', value: '0.1425', unit:'%', plain:'按成交金額算。很多券商電子下單會打折，最低收費也不一樣。' })
+    + row({ k:'tax', label:'證券交易稅（只有賣出）', value: f(taxR * 100, 1), unit:'%', plain: d.isEtf ? (taxR === 0 ? '債券 ETF 目前免徵證交稅，優惠到 2026 年底。' : 'ETF 的證交稅是 0.1%，比一般股票低。') : '一般股票是 0.3%，ETF 是 0.1%。' })
+    + (be ? row({ k:'breakeven', value: f(be, 2), unit:'元', plain: `用今天的收盤價 ${f(P0)} 元買，手續費不打折的話，股價要漲到大約 ${f(be, 2)} 元（${signed((be / P0 - 1) * 100, 2)}%）賣掉才不賠。` }) : '')
+    + `<ul class="summary-list" style="margin-top:10px">
+        <li>賣出價比打平價高，就是賺；比打平價低，就是賠。</li>
+        <li>股價跌了，但期間領到的股利比跌掉的多，整體還是賺。</li>
+        <li>領了股利但股價跌得更多，整體是賠，這叫賺了股息、賠了價差。</li>
+        <li>還沒賣掉之前的賺賠叫${term('paper')}，每天都會變，賣掉才算數。</li>
+        <li>常常買賣，手續費和稅會一直累積，就算每次都小賺也可能被吃掉。</li></ul>`;
+  const calcDefault = (hist.at(-250) || hist[0] || [''])[0];
+  const calc = hist.length ? `<div class="calc">
+      <label>買入日期<input type="date" id="cDate" value="${calcDefault}" min="2000-01-01" max="${hist.at(-1)[0]}"></label>
+      <label>用什麼算<select id="cMode"><option value="money">金額</option><option value="shares">股數</option></select></label>
+      <label id="cAmtLabel">金額（元）<input type="number" id="cAmt" value="100000" min="1" inputmode="numeric"></label>
+      <label>手續費折扣<select id="cDisc"><option value="1">不打折</option><option value="0.6">6 折</option><option value="0.28">2.8 折</option></select></label>
+      <button class="btn" type="button" id="cGo">計算</button></div><div id="cOut"></div>` : stateBox('歷史股價這次沒抓到，沒辦法試算。');
+
+  /* ===== 一頁總結（規則套版，不是 AI 生成） ===== */
+  const revY = (d.rev || []).at(-1);
+  const fundLine = d.isEtf ? 'ETF 沒有單一公司的財報，要看的是它追蹤哪些股票、每年收多少費用。'
+    : [last4.length === 4 ? (lossQ === 0 ? '最近四季都有賺錢' : lossQ === 4 ? '最近四季都是虧損' : `最近四季有 ${lossQ} 季虧損`) : '',
+       revY && has(revY[2]) ? `${+revY[0].slice(5)} 月營收比去年同月${revY[2] >= 0 ? '多' : '少'} ${f(Math.abs(revY[2]), 0)}%` : '',
+       has(v.pe) && v.ind.pe ? `本益比 ${f(v.pe, 1)} 倍，${relWord(v.pe, v.ind.pe.med) === '差不多' ? '和同業差不多' : '比同業' + relWord(v.pe, v.ind.pe.med)}` : (has(ttmEps) && ttmEps <= 0 ? '虧損所以算不出本益比' : '')
+      ].filter(Boolean).join('，') + '。';
+  const techLine = [has(ret1y) ? `一年${upDown(ret1y)} ${f(Math.abs(ret1y), 0)}%` : short ? `掛牌約 ${months} 個月` : '',
+       has(pos52) ? `在一年高低點的 ${Math.round(pos52 * 10)} 成位置` : '',
+       has(ma20) && day ? `收盤價在 20 日均線${day.close >= ma20 ? '上面' : '下面'}` : '',
+       has(rNow) ? `RSI ${f(rNow, 0)}${rNow >= 70 ? '，漲得很急' : rNow <= 30 ? '，跌得很急' : ''}` : ''].filter(Boolean).join('，') + '。';
+  const chipLine = [has(f20) ? `外資近 ${l20.length} 天${f20 >= 0 ? '買超' : '賣超'} ${f(Math.abs(f20), 0)} 張` : '',
+       has(mChg) ? `融資一個月${mChg >= 0 ? '增加' : '減少'} ${f(Math.abs(mChg), 0)} 張` : '',
+       has(frNow) ? `外資持股 ${f(frNow, 1)}%` : ''].filter(Boolean).join('，');
+  const real = (d.warn || []).filter(w => w.type !== '即將除權息');
+  const warnLine = real.length ? `目前有交易警示：${real.map(w => esc(w.type)).join('、')}。` : d.warnOk ? '目前沒有交易警示。' : '交易警示這次沒抓到，請另外確認。';
+  const sumHtml = `<dl class="sum3"><dt>這是什麼</dt><dd>${esc(d.name)}是${esc(d.market)}的${d.isEtf ? ' ETF' : esc(d.industry || '') + '公司'}。</dd>
+      <dt>${term('fund', '基本面')}</dt><dd>${fundLine.length > 1 ? fundLine : '財報資料這次沒抓到。'}</dd>
+      <dt>${term('tech', '技術面')}</dt><dd>${techLine.length > 1 ? techLine : '股價資料這次沒抓到。'}</dd>
+      <dt>${term('chip', '籌碼面')}</dt><dd>${chipLine ? chipLine + '。' : '籌碼資料這次沒抓到。'}</dd>
+      <dt>警示</dt><dd>${warnLine}</dd></dl>
+    <p class="hint">這幾句話是用固定規則從下面的數字整理出來的，只描述現況，沒有任何買賣建議。</p>`;
+  const group = (id, title, what, todo) => `<section class="group" id="${id}"><h2>${title}</h2><p>${what}</p><div class="todo"><strong>看完可以做什麼</strong><ul>${todo.map(t => `<li>${t}</li>`).join('')}</ul></div></section>`;
+
   const FM = 'FinMind';
+  const exch = d.market === '上市' ? '證交所' : '櫃買中心';
   app.innerHTML = `${DEMO ? `<p class="banner">這是<strong>示範資料</strong>，公司和數字都是虛構的。</p>` : ''}
     <section class="card"><div class="title-row"><h1>${esc(d.name)}</h1><span class="tag">${esc(showId)}</span><span class="tag">${esc(d.market)}</span>${d.industry ? `<span class="tag">${esc(d.industry)}</span>` : ''}
       <button class="star" id="star" type="button">${watch.includes(id) ? '已加入自選' : '加入自選'}</button></div></section>
-    ${card('s-warn', '有沒有警示', '下單之前最該先知道的事', srcTag('', d.market === '上市' ? '證交所' : '櫃買中心'), warnHtml)}
-    ${card('s-sum', '一頁總結', '', '', `<ul class="summary-list">${sum.map(s => `<li>${s}</li>`).join('')}</ul><p class="hint">這幾句話是用固定規則從下面的數字整理出來的，只描述現況，沒有任何買賣建議。</p>`)}
-    ${card('s-today', '今日概況', '今天收在哪裡，和大盤比怎麼樣', day ? srcTag(day.date, day.src || (d.market === '上市' ? '證交所' : '櫃買中心')) : '', today)}
-    ${card('s-co', '公司在做什麼', '', srcTag('', d.market === '上市' ? '證交所' : '櫃買中心'), company)}
-    ${card('s-trend', '股價走勢', '現在的價格在過去的什麼位置', lastH ? srcTag(lastH[0], FM) : '', trend)}
-    ${card('s-val', '貴不貴', '和同業比、和它自己的過去比', srcTag(v.date, '證交所、櫃買中心、' + FM), value)}
+    <nav class="jump">${[['s-sum', '總覽'], ['g-fund', '基本面'], ['g-tech', '技術面'], ['g-chip', '籌碼面'], ['s-why', '為什麼漲跌'], ['s-calc', '買入試算']].map(j => `<button type="button" data-goto="${j[0]}">${j[1]}</button>`).join('')}</nav>
+    ${card('s-warn', '有沒有警示', '下單之前最該先知道的事', srcTag('', exch), warnHtml)}
+    ${card('s-sum', '一頁總結', '', '', sumHtml)}
+    ${card('s-today', '今日概況', '今天收在哪裡，和大盤比怎麼樣', day ? srcTag(day.date, day.src || exch) : '', today)}
+
+    ${group('g-fund', '基本面：這家公司本身好不好', '看公司在做什麼、有沒有賺錢、現在的價格貴不貴、每年發多少股利。這些決定了股價長期的方向。', d.isEtf
+      ? ['ETF 的基本面在它追蹤的指數和成分股，可以到發行投信的網站看成分股和費用。', '和同類型的 ETF 比較殖利率和規模。']
+      : ['先問自己：這家公司靠什麼賺錢，我看得懂嗎？看不懂的公司，跌的時候很難判斷要不要繼續抱。', '開另一個分頁查同產業的公司，比較毛利率、股東權益報酬率和本益比。', '每個月 10 號左右回來看月營收，確認成長有沒有延續。', '想存股的話，重點看連續配息幾年、配發率有沒有超過 100%。'])}
+    ${card('s-co', '公司在做什麼', '', srcTag('', exch), company)}
     ${card('s-profit', '有沒有賺錢', '營收、獲利和體質', fin.length ? srcTag(fin.at(-1).date, FM) : '來源：' + FM, profit)}
+    ${card('s-val', '貴不貴', '和同業比、和它自己的過去比', srcTag(v.date, '證交所、櫃買中心、' + FM), value)}
     ${card('s-div', '股利', '每年發多少，發完漲不漲得回來', '來源：' + FM, dividend)}
-    ${card('s-check', '看完了嗎', '五個問題，點了會帶你回到對應的區塊', '', `<ol class="check">
-      ${[['s-co', '我知道這家公司靠什麼賺錢嗎？'], ['s-profit', '它最近有沒有賺錢？'], ['s-val', '現在的價格和同業、和它自己的過去比起來如何？'], ['s-warn', '它有沒有交易警示或處置？'], ['s-trend', '如果跌 30%，我承受得住嗎？']]
-        .map((x, i) => `<li><button type="button" data-goto="${x[0]}" data-n="${i + 1}">${i + 1}. ${x[1]}</button></li>`).join('')}</ol>`)}
-    <p class="hint" style="text-align:center">法人買賣、融資融券、技術指標和重大訊息會在下一版加入。</p>`;
+
+    ${group('g-tech', '技術面：價格最近怎麼走', '只看股價和成交量本身：現在在什麼位置、漲跌得多急、平常波動多大。它描述的是已經發生的事。', [
+      '用一年高低點和最大跌幅，估計如果買在高點，最壞可能要承受多少帳面虧損，先想好自己能接受多少。',
+      '用可能的價格範圍，想像一個月後價格可能離現在多遠，避免把短期的漲跌當成意外。',
+      'RSI、KD、MACD 只能說明最近的力道，不要單獨拿來決定買賣。'])}
+    ${card('s-trend', '股價走勢', '現在的價格在過去的什麼位置', lastH ? srcTag(lastH[0], FM) : '', trend)}
+    ${card('s-ind', '技術指標', '最近漲跌的力道', lastH ? srcTag(lastH[0], FM + ' 股價計算') : '', indic)}
+    ${card('s-risk', '波動與風險', '平常跳多大、最慘跌過多少', lastH ? srcTag(lastH[0], FM) : '', risk)}
+    ${card('s-range', '可能的價格範圍', '不是預測，是用過去的波動推算', lastH ? srcTag(lastH[0], FM + ' 股價計算') : '', range)}
+
+    ${group('g-chip', '籌碼面：誰在買、誰在賣', '看外資、投信這些大型機構最近的買賣，以及散戶借錢買股票（融資）和放空（融券）的變化。', [
+      '看外資和投信最近是連續買還是連續賣，再和股價的方向對照。',
+      '融資大增但股價沒漲，代表借錢買的人變多，下跌時賣壓可能比較大。',
+      '籌碼資料都是盤後公布的，只能看到已經發生的事，不知道他們接下來會怎麼做。'])}
+    ${card('s-inst', '三大法人', '外資、投信、自營商的買賣', idays.length ? srcTag(idays.at(-1), FM) : '來源：' + FM, instHtml)}
+    ${card('s-margin', '融資融券', '借錢買和借股票賣', mg.length ? srcTag(mg.at(-1).date, FM) : '來源：' + FM, marginHtml)}
+    ${card('s-foreign', '外資持股比例', '外資手上有多少', shr.length ? srcTag(shr.at(-1).date, FM) : '來源：' + FM, foreignHtml)}
+
+    <section class="group" id="g-money"><h2>漲跌與賺賠</h2><p>股價為什麼會動、怎樣算賺錢，以及如果你之前買了，現在會是什麼結果。</p></section>
+    ${card('s-why', '為什麼漲、為什麼跌', '', '來源：' + FM, why)}
+    ${card('s-money', '怎樣會賺錢、怎樣是賠錢', '', '', money)}
+    ${card('s-calc', '如果我之前買了', '輸入日期和金額，算到今天賺多少', '', calc)}
+    ${card('s-check', '看完了嗎', '點了會帶你回到對應的區塊', '', `<ol class="check">
+      ${[['s-co', '我知道這家公司靠什麼賺錢嗎？'], ['s-profit', '它最近有沒有賺錢？'], ['s-val', '現在的價格和同業、和它自己的過去比起來如何？'], ['s-warn', '它有沒有交易警示或處置？'], ['s-risk', '如果跌 30%，我承受得住嗎？'], ['s-inst', '最近法人在買還是在賣？'], ['s-calc', '如果我之前買，現在會賺還是賠？']]
+        .map((q, i) => `<li><button type="button" data-goto="${q[0]}" data-n="${i + 1}">${i + 1}. ${q[1]}</button></li>`).join('')}</ol>`)}
+    <p class="hint" style="text-align:center">重大訊息和大戶持股比例會在之後的版本加入。</p>`;
+
 
   document.getElementById('star').onclick = e => {
     let w = store.get(KEY.watch, []);
@@ -810,6 +1329,7 @@ async function renderStock(id){
     e.target.textContent = w.includes(id) ? '已加入自選' : '加入自選';
   };
   if(hist.length && src.price && src.price.ok) drawChart(hist, dv);
+  bindCalc(d);
   scrollTo(0, 0);
 }
 
@@ -873,13 +1393,13 @@ async function renderAbout(){
     <p class="plain" style="display:block;margin-top:8px">所有內容只描述數字本身和它的相對位置，不提供買賣建議。</p>`)
   + card('', '資料從哪裡來', '', '', `<dl class="kv">
       <dt>每日行情、估值、大盤</dt><dd><a href="https://openapi.twse.com.tw/" target="_blank" rel="noopener">證交所 OpenAPI</a>、<a href="https://www.tpex.org.tw/openapi/" target="_blank" rel="noopener">櫃買中心 OpenAPI</a></dd>
-      <dt>歷史股價、財報、股利</dt><dd><a href="https://finmind.github.io/" target="_blank" rel="noopener">FinMind</a></dd>
+      <dt>歷史股價、財報、股利、法人買賣、融資融券、外資持股</dt><dd><a href="https://finmind.github.io/" target="_blank" rel="noopener">FinMind</a></dd>
       <dt>更新時間</dt><dd>每個交易日傍晚自動抓一次，所以白天看到的是前一個交易日的資料。</dd></dl>
     ${Object.keys(src).length ? `<div class="scroll"><table class="data" style="margin-top:10px"><tr><th>來源</th><th>資料日期</th><th>抓取時間</th><th>狀態</th></tr>
       ${Object.entries(src).map(([k, s]) => `<tr><td>${esc(k)}</td><td>${esc(s.date || '無')}</td><td>${esc(s.at || '')}</td><td>${s.ok ? '正常' : '沒抓到'}</td></tr>`).join('')}</table></div>` : ''}`)
   + card('', '目前沒有的東西', '', '', `<ul class="summary-list" style="display:block">
       <li>即時報價。這裡全部是盤後資料。</li><li>興櫃股票。</li><li>ETF 的成分股、費用與折溢價。</li>
-      <li>法人買賣、融資融券、技術指標、重大訊息。</li><li>還原權息後的股價。圖上的價格是原始價格，除息日會有缺口。</li></ul>`);
+      <li>重大訊息，以及大戶和散戶的持股比例（集保股權分散表）。</li><li>還原權息後的股價。圖上的價格是原始價格，除息日會有缺口。</li></ul>`);
 }
 
 /* ============ 名詞小卡、導覽、提示 ============ */
@@ -917,7 +1437,7 @@ document.addEventListener('click', e => {
   if(t){ openTerm(t.dataset.term); return; }
   if(e.target.matches('[data-close]')){ overlay.innerHTML = ''; return; }
   const g = e.target.closest('[data-goto]');
-  if(g){ track('checklist_click', g.dataset.n); document.getElementById(g.dataset.goto).scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if(g){ e.preventDefault(); if(g.dataset.n) track('checklist_click', g.dataset.n); const t = document.getElementById(g.dataset.goto); if(t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   const bar = e.target.closest('[data-tip]');
   if(bar) showTip(bar);
   if(!e.target.closest('.search')){ const s = document.getElementById('sugg'); if(s) s.hidden = true; }
